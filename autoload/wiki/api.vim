@@ -284,13 +284,11 @@ fun! wiki#api#open_index()
     let html_dir = g:wiki_config['html_dir']
     let md_dir = g:wiki_config['markdown_dir']
     let img_dir = html_dir..'/images'
-    let css_dir = html_dir..'/css'
     let dirs = [html_dir, md_dir, img_dir]
     for dir in dirs
       call mkdir(s:join_path(wiki_home, dir), 'p')
     endfor
     call system(['cp', '-r', g:markdown_wiki_plug_dir..'/templates', g:wiki_config['home']])
-    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/css', s:join_path(g:wiki_config['home'], html_dir)])
   endif
   let index_path = s:markdown_path('index.md')
   silent exe 'edit ' .. index_path
@@ -339,14 +337,14 @@ endfun
 
 fun! s:md2html(stem)
   call s:change_template_theme()
-  let depth = count(a:stem, '/')
+  " let depth = count(a:stem, '/')
   let html = s:join_path(s:html_dir_path, a:stem..'.html')
   let html_dir = fnamemodify(html, ':h')
   if !isdirectory(html_dir)
     call mkdir(html_dir, 'p')
   endif
   let md = s:join_path(s:markdown_dir_path, a:stem..'.md')
-  call system([s:script_path, md, html, s:template_path, depth])
+  call system([s:script_path, md, html, s:template_path])
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif
