@@ -20,6 +20,9 @@ fun! s:html_path(html_rel)
   return s:html_dir_path..'/'..a:html_rel
 endfun
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  get markdown absolute path using relative path  "
+""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:markdown_path(md_rel)
   return s:markdown_dir_path..'/'..a:md_rel
 endfun
@@ -44,7 +47,10 @@ fun! s:relative_path_to(parent, child)
   return relpath
 endfun
 
-fun! s:cur_dir_relative_path()
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  get current dir's relative path to markdown directory  "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:cur_dir_relative_path_to_root()
   let dir_abs = expand('%:p:h')
   return s:relative_path_to(s:markdown_dir_path, dir_abs)
 endfun
@@ -183,44 +189,80 @@ fun! wiki#api#move_link()
   endif
 endfun
 
-fun! s:delete_images_in_markdown(markdown_path)
-  for line in readfile(a:markdown_path)
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  delete all images in markdown file according to its absolute path  "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:delete_images_in_markdown(md_path)
+  for line in readfile(a:md_path)
     let relpath = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
+    let abspath = s:join_path(fnamemodify(a:md_path, ':h'), relpath)
     if !empty(relpath)
       let name = fnamemodify(relpath, ':t')
       if name =~# '\v\.(png|jpg|jpeg|bmp|svg|gif|webp)$'
-        call delete(relpath)
+        echo abspath
+        call delete(abspath)
         echomsg name..' has been deleted'
       endif
     endif
   endfor
 endfun
 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  delete markdown according to its relative path to markdown root directory  "
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:delete_markdown(md_rel)
+  let name = fnamemodify(a:md_rel, ':t')
+  let html_name = substitute(name, '.md', '.html', '')
+  let html_rel = substitute(a:md_rel, '.md', '.html', '')
+  let html_path = s:html_path(html_rel)
+  let md_path = s:markdown_path(a:md_rel)
+  call s:delete_images_in_markdown(md_path)
+  call delete(md_path)
+  call delete(html_path)
+  echomsg name..' and '..html_name..' have been deleted'
+endfun
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  delete direcotry according to relative path to current working directory  "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:delete_directory(dir)
+  for md in split(globpath(a:dir, '**/*.md'))
+    let md_rel = s:join_path(s:cur_dir_relative_path_to_root(), md)
+    call s:delete_markdown(md_rel)
+  endfor
+  " relative path to markdown root directory
+  let dir_rel = s:join_path(s:cur_dir_relative_path_to_root(), a:dir)
+  call system(['rm', '-rf', a:dir])
+  call system(['rm', '-rf', s:html_path(dir_rel)])
+endfun
+
 fun! wiki#api#delete_link()
   let line = getline('.')
-  let md_rel = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
-  if !empty(md_rel)
-    let name = fnamemodify(md_rel, ':t')
+  let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
+  if !empty(md)
+    let name = fnamemodify(md, ':t')
     if name =~# '\.md$'
-      let opt = confirm('Are you sure you want to delete this link?', "&Yes\n&No")
-      let htmlname = substitute(name, '.md', '.html', '')
-      let html_rel = s:join_path(s:cur_dir_relative_path(), substitute(md_rel, '.md', '.html', ''))
-      let html_path = s:html_path(html_rel)
-      if opt == 1
-        call s:delete_images_in_markdown(md_rel)
-        call delete(md_rel)
-        call delete(html_path)
-        normal! dd
-        echomsg name..' and '..htmlname..' have been deleted'
+      if name ==# 'index.md'
+        let opt = confirm('Are you sure you want to delete this whole directory?', "&Yes\n&No")
+        if opt == 1
+          let dir = fnamemodify(md, ':h')
+          call s:delete_directory(dir)
+        endif
+      else
+        let opt = confirm('Are you sure you want to delete this link?', "&Yes\n&No")
+        if opt == 1
+          let md_rel = s:join_path(s:cur_dir_relative_path_to_root(), md)
+          call s:delete_markdown(md_rel)
+        endif
       endif
     elseif name =~# '\v\.(png|jpg|jpeg|bmp|svg|gif|webp)$'
       let opt = confirm('Are you sure you want to delete this picture?', "&Yes\n&No")
       if opt == 1
-        call delete(md_rel)
-        normal! dd
+        call delete(md)
       endif
       echomsg name..' has been deleted'
     endif
+    normal! dd
   endif
 endfun
 
