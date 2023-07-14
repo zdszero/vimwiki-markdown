@@ -226,8 +226,6 @@ endfun
 
 fun! s:wiki_add_meta_data(title)
   call setline(1, '% ' .. a:title)
-  call setline(2, '% zdszero')
-  call setline(3, '% ' .. strftime('%Y-%m-%d'))
 endfun
 
 fun! wiki#api#paste_image()
@@ -240,8 +238,17 @@ fun! wiki#api#open_index()
   let wiki_home = g:wiki_config['home']
   if !isdirectory(wiki_home)
     call mkdir(wiki_home, 'p')
-    let msg = wiki_home .. ' has been created'
-    echomsg msg
+    echomsg wiki_home .. ' has been created'
+    let html_dir = g:wiki_config['html_dir']
+    let md_dir = g:wiki_config['markdown_dir']
+    let img_dir = html_dir..'/images'
+    let css_dir = html_dir..'/css'
+    let dirs = [html_dir, md_dir, img_dir]
+    for dir in dirs
+      call mkdir(s:join_path(wiki_home, dir), 'p')
+    endfor
+    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/templates', g:wiki_config['home']])
+    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/css', s:join_path(g:wiki_config['home'], html_dir)])
   endif
   let index_path = s:markdown_path('index.md')
   silent exe 'edit ' .. index_path

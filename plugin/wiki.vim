@@ -6,7 +6,7 @@ let g:markdown_wiki_plug_dir = expand('<sfile>:p:h:h')
 
 if !exists('g:wiki_config')
   let g:wiki_config = {
-    \ 'home': '/home/zds/Develop/Wiki',
+    \ 'home': expand('~') .. '/Wiki',
     \ 'markdown_dir': 'sources',
     \ 'html_dir': 'docs',
     \ 'template_path': 'templates/easy_template.html',
