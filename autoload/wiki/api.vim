@@ -75,37 +75,59 @@ fun! wiki#api#goto_parent_link()
   endif
 endfun
 
+fun! s:edit_link(line)
+  let title = matchstr(a:line, '\[\zs.*\ze\]')
+  let goto_file = matchstr(a:line, '(\zs.*\ze)')
+  let file_exist = 1
+  if !filereadable(goto_file)
+    let file_exist = 0
+  endif
+  let file_dir = fnamemodify(goto_file, ':h')
+  if !isdirectory(file_dir)
+    let choice = input(printf('Create directory %s ? (y/n): ', file_dir))
+    if empty(choice) || choice == 'y'
+      call mkdir(file_dir, 'p')
+    else
+      return
+    endif
+  endif
+  exe 'edit ' .. goto_file
+  if file_exist == 0
+    call setline(1, '% ' .. title)
+  endif
+endfun
+
 """""""""""""""""""""""""""""""""""""""""""
 "  follow or create link in current line  "
 """""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#create_follow_link()
   let line = getline('.')
   if line =~# '\v\[.*\]\(.*\)'
-    let title = matchstr(line, '\[\zs.*\ze\]')
-    let goto_file = matchstr(line, '(\zs.*\ze)')
-    let file_exist = 1
-    if !filereadable(goto_file)
-      let file_exist = 0
-    endif
-    let file_dir = fnamemodify(goto_file, ':h')
-    if !isdirectory(file_dir)
-      let choice = input(printf('Create directory %s ? (y/n): ', file_dir))
-      if empty(choice) || choice == 'y'
-        call mkdir(file_dir, 'p')
-      else
-        return
-      endif
-    endif
-    exe 'edit ' .. goto_file
-    if file_exist == 0
-      call s:wiki_add_meta_data(title)
-    endif
+    call s:edit_link(line)
   else
+    if empty(line)
+      let line = input('enter makrdown filename: ')
+    endif
     let goto_file = substitute(line, ' ', '_',  'g')
     if goto_file !~# '\.md$'
       let goto_file = goto_file..'.md'
     endif
-    let md_link = '[' .. line .. ']' .. '(' .. goto_file .. ')'
+    let md_link = printf('[%s](./%s)', line, goto_file)
+    call setline(line('.'), md_link)
+    w
+  endif
+endfun
+
+fun! wiki#api#create_follow_directory()
+  let line = getline('.')
+  if line =~# '\v\[.*\]\(.*\)'
+    call s:edit_link(line)
+  else
+    if empty(line)
+      let line = input('enter sub directory name: ')
+    endif
+    let dir = substitute(line, ' ', '_',  'g')
+    let md_link = printf('[%s](./%s/index.md)', line, dir)
     call setline(line('.'), md_link)
     w
   endif
@@ -268,10 +290,6 @@ fun! wiki#api#delete_link()
     endif
     normal! dd
   endif
-endfun
-
-fun! s:wiki_add_meta_data(title)
-  call setline(1, '% ' .. a:title)
 endfun
 
 fun! wiki#api#paste_image()
