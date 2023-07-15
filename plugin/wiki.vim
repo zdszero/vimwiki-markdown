@@ -26,8 +26,6 @@ nnoremap <silent><script> <Plug>WikiDeleteLink
       \ :<c-u>call wiki#api#delete_link()<CR>
 nnoremap <silent><script> <Plug>WikiRenameLink
       \ :<c-u>call wiki#api#rename_link()<CR>
-nnoremap <silent><script> <Plug>WikiMoveLink
-      \ :<c-u>call wiki#api#move_link()<CR>
 nnoremap <silent><script> <Plug>Wiki2HTML
       \ :<c-u>call wiki#api#wiki2html(v:false)<CR>
 nnoremap <silent><script> <Plug>Wiki2HTMLBrowse

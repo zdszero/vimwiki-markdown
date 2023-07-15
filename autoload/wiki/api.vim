@@ -16,6 +16,9 @@ let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = s:get_path('template_path')
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
 
+""""""""""""""""""""""""""""""""""""""""""""""""
+"  get html absolute path using relative path  "
+""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:html_path(html_rel)
   return s:html_dir_path..'/'..a:html_rel
 endfun
@@ -27,6 +30,9 @@ fun! s:markdown_path(md_rel)
   return s:markdown_dir_path..'/'..a:md_rel
 endfun
 
+""""""""""""""""""""""""""""""""""""""""
+"  get relative path between two path  "
+""""""""""""""""""""""""""""""""""""""""
 fun! s:relative_path_to(parent, child)
   let from_dirs = split(expand(a:parent), '/')
   let to_dirs = split(expand(a:child), '/')
@@ -69,6 +75,9 @@ fun! wiki#api#goto_parent_link()
   endif
 endfun
 
+"""""""""""""""""""""""""""""""""""""""""""
+"  follow or create link in current line  "
+"""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#create_follow_link()
   let line = getline('.')
   if line =~# '\v\[.*\]\(.*\)'
@@ -109,31 +118,61 @@ fun! s:try_rename(from, to)
   endif
 endfun
 
+fun! s:rename_directory(abspath, newname)
+  let newabs = s:join_path(fnamemodify(a:abspath, ':h'), a:newname)
+  call s:try_rename(a:abspath, newabs)
+endfun
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"   rename markdown and html file of current link                  "
+"      if current link is index.md, rename the directory           "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#rename_link()
   let line = getline('.')
-  let mdpath = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
-  if !empty(mdpath)
-    " change markdown link in current line
-    let hint = input("Rename to: ")
-    if empty(hint)
-      return
+  let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
+  if !empty(md)
+    let name = fnamemodify(md, ':t')
+    if name =~# '\.md$'
+      if name ==# 'index.md'
+        let hint = input("Rename directory name to: ")
+        if empty(hint)
+          return
+        endif
+        let dir = fnamemodify(md, ':h')
+        let dir_rel = s:join_path(s:cur_dir_relative_path_to_root(), dir)
+        let dir_abs = s:markdown_path(dir_rel)
+        let dir_html_abs = s:html_path(dir_rel)
+        call s:rename_directory(dir_abs, hint)
+        call s:rename_directory(dir_html_abs, hint)
+        let new_link = s:join_path(fnamemodify(dir, ':h'), hint, 'index.md')
+        let hint = hint .. ' index'
+        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_link..')', '')
+        call setline(line('.'), new_line)
+      else
+        let hint = input("Rename markdown filename to: ")
+        if empty(hint)
+          return
+        endif
+        let new_name = substitute(hint, " ", "_", "g")..'.md'
+        let name = fnamemodify(md, ':t')
+        let parent_dir = fnamemodify(md, ':h')
+        let new_mdpath = parent_dir.."/"..new_name
+        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_mdpath..')', '')
+        call setline(line('.'), new_line)
+        " rename markdown and html files
+        call s:try_rename(md, new_mdpath)
+        let parent_absdir = expand('%:p:h') .. '/' .. parent_dir
+        let reldir = s:relative_path_to(s:markdown_dir_path, parent_absdir)
+        let htmlpath = s:html_path(reldir .. '/' .. substitute(name, '.md', '.html', ''))
+        if !filereadable(htmlpath)
+          return
+        endif
+        let new_htmlpath = s:html_path(reldir .. '/' .. substitute(new_name, '.md', '.html', ''))
+        call s:try_rename(htmlpath, new_htmlpath)
+      endif
+    else
+      echomsg 'current link is not a markdown link, which cannot be renamed!'
     endif
-    let new_name = substitute(hint, " ", "_", "g")..'.md'
-    let name = fnamemodify(mdpath, ':t')
-    let parent_dir = fnamemodify(mdpath, ':h')
-    let new_mdpath = parent_dir.."/"..new_name
-    let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_mdpath..')', '')
-    call setline(line('.'), new_line)
-    " rename markdown and html files
-    call s:try_rename(mdpath, new_mdpath)
-    let parent_absdir = expand('%:p:h') .. '/' .. parent_dir
-    let reldir = s:relative_path_to(s:markdown_dir_path, parent_absdir)
-    let htmlpath = s:html_path(reldir .. '/' .. substitute(name, '.md', '.html', ''))
-    if !filereadable(htmlpath)
-      return
-    endif
-    let new_htmlpath = s:html_path(reldir .. '/' .. substitute(new_name, '.md', '.html', ''))
-    call s:try_rename(htmlpath, new_htmlpath)
   endif
 endfun
 
@@ -148,45 +187,6 @@ fun! s:change_all_image_links(dir, filepath)
   endif
   let cmd = printf("!sed -i 's/%s/%s/' %s", sub, pat, a:filepath)
   silent! exe cmd
-endfun
-
-fun! wiki#api#move_link()
-  let line = getline('.')
-  let mdpath = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
-  let hint = matchstr(line, '\v\[\zs.*\ze\]\(.*\)')
-  if !empty(mdpath)
-    " change markdown link in current line
-    let move_dir = input("Move to directory: ")
-    if empty(move_dir)
-      return
-    endif
-    let move_dir = substitute(move_dir, ' ', '_', 'g')
-    if !isdirectory(move_dir)
-      call mkdir(move_dir, 'p')
-    endif
-    let name = fnamemodify(mdpath, ':t')
-    let parent_dir = fnamemodify(mdpath, ':h')
-    let new_mdpath = simplify(parent_dir..'/'..move_dir..'/'..name)
-    let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_mdpath..')', '')
-    call setline(line('.'), new_line)
-    call s:change_all_image_links(move_dir, mdpath)
-    silent! exe '!touch '..mdpath
-    call s:try_rename(mdpath, new_mdpath)
-
-    let parent_absdir = expand('%:p:h') .. '/' .. parent_dir
-    let reldir = s:relative_path_to(s:markdown_dir_path, parent_absdir)
-    let htmlpath = s:html_path(reldir .. '/' .. substitute(name, '.md', '.html', ''))
-    if !filereadable(htmlpath)
-      return
-    endif
-    let target_dir = s:html_path(reldir .. '/' .. move_dir)
-    if !isdirectory(target_dir)
-      call mkdir(target_dir, 'p')
-    endif
-    let new_htmlpath = s:html_path(reldir .. '/' .. substitute(move_dir..'/'..name, '.md', '.html', ''))
-    " call s:change_all_image_links(move_dir, htmlpath)
-    call s:try_rename(htmlpath, new_htmlpath)
-  endif
 endfun
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -236,6 +236,10 @@ fun! s:delete_directory(dir)
   call system(['rm', '-rf', s:html_path(dir_rel)])
 endfun
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"  delelte markdown and html file of current link                  "
+"      if current link is index.md, delete all files in direcotry  "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#delete_link()
   let line = getline('.')
   let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
@@ -323,20 +327,7 @@ fun! wiki#api#open_html()
   redraw
 endfun
 
-fun! s:change_template_theme()
-  let cur_css = system(['sed', '-n', 's/.*href="\(.*\)".*/\1/p', s:template_path])
-	let cur_css = substitute(cur_css, '\n', '', 'g')
-  let target_css = printf('./css/%s.css', g:wiki_config['theme'])
-	if cur_css != target_css
-		let pat = escape(cur_css, '/\.')
-		let sub = escape(target_css, '/\.')
-		let cmd = printf("sed -i 's/%s/%s/g' %s", pat, sub, s:template_path)
-		call system(cmd)
-	endif
-endfun
-
 fun! s:md2html(stem)
-  call s:change_template_theme()
   " let depth = count(a:stem, '/')
   let html = s:join_path(s:html_dir_path, a:stem..'.html')
   let html_dir = fnamemodify(html, ':h')
