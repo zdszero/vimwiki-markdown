@@ -16,23 +16,23 @@ let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = s:get_path('template_path')
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
 
-""""""""""""""""""""""""""""""""""""""""""""""""
-"  get html absolute path using relative path  "
-""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"                 get html absolute path using relative path                 "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:html_path(html_rel)
   return s:html_dir_path..'/'..a:html_rel
 endfun
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""
-"  get markdown absolute path using relative path  "
-""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"               get markdown absolute path using relative path               "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:markdown_path(md_rel)
   return s:markdown_dir_path..'/'..a:md_rel
 endfun
 
-""""""""""""""""""""""""""""""""""""""""
-"  get relative path between two path  "
-""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"                    get relateive path between two path                     "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:relative_path_to(parent, child)
   let from_dirs = split(expand(a:parent), '/')
   let to_dirs = split(expand(a:child), '/')
@@ -53,9 +53,9 @@ fun! s:relative_path_to(parent, child)
   return relpath
 endfun
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"  get current dir's relative path to markdown directory  "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"        get current directory's relateive path to markdown directory        "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:cur_dir_relative_path_to_root()
   let dir_abs = expand('%:p:h')
   return s:relative_path_to(s:markdown_dir_path, dir_abs)
@@ -97,9 +97,9 @@ fun! s:edit_link(line)
   endif
 endfun
 
-"""""""""""""""""""""""""""""""""""""""""""
-"  follow or create link in current line  "
-"""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"                   follow or create link in current line                    "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#create_follow_link()
   let line = getline('.')
   if line =~# '\v\[.*\]\(.*\)'
@@ -145,10 +145,10 @@ fun! s:rename_directory(abspath, newname)
   call s:try_rename(a:abspath, newabs)
 endfun
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"   rename markdown and html file of current link                  "
-"      if current link is index.md, rename the directory           "
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" rename markdown and html file of current link, if cuurent link is index    "
+" file, rename the directory                                                 "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#rename_link()
   let line = getline('.')
   let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
@@ -211,9 +211,9 @@ fun! s:change_all_image_links(dir, filepath)
   silent! exe cmd
 endfun
 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"  delete all images in markdown file according to its absolute path  "
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"     delete all images in markdown file according to its absolute path      "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:delete_images_in_markdown(md_path)
   for line in readfile(a:md_path)
     let relpath = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
@@ -258,10 +258,10 @@ fun! s:delete_directory(dir)
   call system(['rm', '-rf', s:html_path(dir_rel)])
 endfun
 
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"  delelte markdown and html file of current link                  "
-"      if current link is index.md, delete all files in direcotry  "
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" delete markdown and html file of current link, if currnet link is index    "
+" file, delete the whole directory                                           "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! wiki#api#delete_link()
   let line = getline('.')
   let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
@@ -299,8 +299,12 @@ fun! wiki#api#paste_image()
 endfun
 
 fun! wiki#api#open_index()
-  let wiki_home = g:wiki_config['home']
+  let wiki_home = expand(g:wiki_config['home'])
   if !isdirectory(wiki_home)
+    let opt = confirm('Do you want to create a new vimwiki?', "&Yes\n&No")
+    if opt == 2
+      return
+    endif
     call mkdir(wiki_home, 'p')
     echomsg wiki_home .. ' has been created'
     let html_dir = g:wiki_config['html_dir']
@@ -414,7 +418,19 @@ fun! s:convert_current()
   endif
 endfun
 
+fun! s:check_pandoc()
+  if executable('pandoc')
+    return 1
+  else
+    echoerr 'You need to install pandoc before converting markdown to html'
+    return 0
+  endif
+endfun
+
 fun! wiki#api#wiki2html(browse)
+  if !s:check_pandoc()
+    return
+  endif
   call s:convert_current()
   if a:browse
     call wiki#api#open_html()
@@ -422,6 +438,9 @@ fun! wiki#api#wiki2html(browse)
 endfun
 
 fun! wiki#api#wiki_all2html(convert_all)
+  if !s:check_pandoc()
+    return
+  endif
   if a:convert_all
     call s:convert_all()
   else
