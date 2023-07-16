@@ -1,0 +1,96 @@
+*vimwiki-markdown.txt*       Wrting notes in vim should be easy.
+
+INTRODUCTION                                            *vimwiki-markdown-intro*
+==============================================================================
+
+vimwiki-markdown is a simple, easy-to-use vim plugin which is intended to help
+you organize your notes in markdown with hierarchy structure and convert all
+your notes to a static html site using pandoc.
+
+==============================================================================
+CONFIGURATION                                          *vimwiki-markdown-config*
+
+                                                                 *g:wiki_config*
+Specify the path of vimwiki-markdown and template usd by pandoc.
+
+Default value:
+>
+    let g:wiki_config = {
+      \ 'home': '~/wiki',
+      \ 'markdown_dir': 'sources',
+      \ 'html_dir': 'docs',
+      \ 'template_path': 'templates/github.html'
+      }
+
+The meaning of the options in `g:wiki_config`:
+
+  • home: the home directory of your wiki .
+  • markdown_dir: the directory to put all your markdown notes.
+  • html_dir: the directory to put all converted html files.
+  • template_path: the template file path in home directory, template file
+is used by pandoc to generate your corresponding html file.
+
+
+
+                                                       *g:wiki_preview_browser*
+
+Specify the browser to open converted html
+>
+    let g:wiki_preview_browser = 'google-chrome-stable'
+<
+
+                                                          *g:wiki_generate_toc*
+
+Wheather to generate table of content in html file, default value is 1
+
+==============================================================================
+MAPPINPS                                             *vimwiki-markdown-mappings*
+
+*<Plug>WikiIndex*                 see also |:WikiIndex|
+*<Plug>WikiCreateFollowLink*      see also |:WikiCreateFollowLink|
+*<Plug>WikiCreateFollowDirectory* see also |:WikiDeleteLink|
+*<Plug>WikiDeleteLink*            see also |:WikiDeleteLink|
+*<Plug>WikiRenameLink*            see also |:WikiRenameLink|
+*<Plug>WikiGotoParent*            see also |:WikiGotoParent|
+*<Plug>Wiki2HTML*                 see also |:Wiki2HTML|
+*<Plug>WikiAll2HTML*              see also |:WikiAll2HTML|
+*<Plug>Wiki2HTMLBrowse*           convert current markdown to html and then open
+                                the corresponding html in browser
+*<Plug>WikiOpenHTML*              see also |:WikiOpenHTML|
+*<Plug>WikiPasteImage*            see also |:WikiPasteImage|
+
+==============================================================================
+COMMNADS                                             *vimwiki-markdown-commands*
+
+*:WikiIndex*                      Open vimwiki-markdown home index
+
+*:WikiCreateFollowLink*           Create or follow a markdown link in current
+                                working directory
+
+*:WikiCreateFollowDirectory*      Create or follow a subdirectory index link in
+                                current working directory
+
+*:WikiDeleteLink*                 Delete markdown and html file of current link
+
+*:WikiRenameLink*                 Rename the directory name or markdown filename
+                                of current link
+
+*:WikiPasteImage*                 Paste image from clipboard to wiki image
+                                directory and put a image link in current line
+
+*:Wiki2HTML*                      Convert current markdown file to html
+
+*:WikiAll2HTML*                   Convert all changed markdown files to htmls
+
+*:WikiAll2HTML!*                  Convert all markdown files to htmls
+
+*:WikiOpenHTML*                   Open corresponding html file in your browser
+
+*:WikiClean*                      Remove all redudant html files
+
+==============================================================================
+LICENSE                                         *hugo-license*
+
+MIT license.
+
+vim:tw=78:ts=2:sts=2:sw=2:ft=help:norl:
