@@ -1,10 +1,9 @@
 fun! s:get_path(key)
-  return s:format_path(g:wiki_config['home'] .. '/' .. g:wiki_config[a:key])
+  return expand(g:wiki_config['home'] .. '/' .. g:wiki_config[a:key])
 endfun
 
-fun! s:format_path(origin)
-  let tmp = substitute(expand(a:origin), '//', '/', 'g')
-  return substitute(tmp, '/$', '', '')
+fun! s:get_home()
+  return expand(g:wiki_config['home'])
 endfun
 
 fun! s:join_path(...)
@@ -127,7 +126,7 @@ fun! wiki#api#create_follow_directory()
       let line = input('enter sub directory name: ')
     endif
     let dir = substitute(line, ' ', '_',  'g')
-    let md_link = printf('[%s](./%s/index.md)', line, dir)
+    let md_link = printf('[%s index](./%s/index.md)', line, dir)
     call setline(line('.'), md_link)
     w
   endif
@@ -299,7 +298,7 @@ fun! wiki#api#paste_image()
 endfun
 
 fun! wiki#api#open_index()
-  let wiki_home = expand(g:wiki_config['home'])
+  let wiki_home = s:get_home()
   if !isdirectory(wiki_home)
     let opt = confirm('Do you want to create a new vimwiki?', "&Yes\n&No")
     if opt == 2
@@ -314,16 +313,21 @@ fun! wiki#api#open_index()
     for dir in dirs
       call mkdir(s:join_path(wiki_home, dir), 'p')
     endfor
-    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/templates', g:wiki_config['home']])
+    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/templates', s:get_home()])
   endif
   let index_path = s:markdown_path('index.md')
   silent exe 'edit ' .. index_path
+  call setline(1, '% Wiki Home')
+  call setline(2, '')
+  call setline(3, '<!-- edit your content below -->')
+  call setline(4, '')
+  call cursor(4, 0)
 endfun
 
 fun! wiki#api#open_html()
   let l:curfile = expand('%')
   let bufpath = expand('%:p:h')
-  if bufpath !~# '^' .. g:wiki_config['home']
+  if bufpath !~# '^' .. s:get_home()
     echoerr 'the current file is not in wiki home directory!'
     return
   endif
@@ -333,7 +337,7 @@ fun! wiki#api#open_html()
   endif
   let md_rel = substitute(expand('%:p'), s:markdown_dir_path, '', '')
   let html_rel = substitute(md_rel, '\.md$', '.html', '')
-  let html_path = join([g:wiki_config['home'], g:wiki_config['html_dir'], html_rel], '/')
+  let html_path = join([s:get_home(), g:wiki_config['html_dir'], html_rel], '/')
   if exists('g:wiki_preview_browser')
     silent! exe '!'..g:wiki_preview_browser..' '..html_path
   else
