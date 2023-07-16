@@ -353,7 +353,7 @@ fun! s:md2html(stem)
     call mkdir(html_dir, 'p')
   endif
   let md = s:join_path(s:markdown_dir_path, a:stem..'.md')
-  call system([s:script_path, md, html, s:template_path])
+  call system([s:script_path, md, html, s:template_path, g:wiki_generate_toc])
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif

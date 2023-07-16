@@ -13,6 +13,10 @@ if !exists('g:wiki_config')
     \}
 endif
 
+if !exists('g:wiki_generate_toc')
+  let g:wiki_generate_toc = 1
+endif
+
 nnoremap <silent><script> <Plug>(WikiIndex)
       \ :<c-u>call wiki#api#open_index()<CR>
 nnoremap <silent><script> <Plug>(WikiOpenHTML)
