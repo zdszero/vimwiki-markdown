@@ -342,6 +342,10 @@ fun! wiki#api#open_html()
   let md_rel = substitute(expand('%:p'), s:markdown_dir_path, '', '')
   let html_rel = substitute(md_rel, '\.md$', '.html', '')
   let html_path = join([s:get_home(), g:wiki_config['html_dir'], html_rel], '/')
+  if !filereadable(html_path)
+    echomsg 'html has not been coverted for this markdown file'
+    return
+  endif
   if exists('g:wiki_preview_browser')
     silent! exe '!'..g:wiki_preview_browser..' '..html_path
   else
