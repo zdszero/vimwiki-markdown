@@ -299,11 +299,13 @@ endfun
 
 fun! wiki#api#open_index()
   let wiki_home = s:get_home()
+  let init_index = 0
   if !isdirectory(wiki_home)
     let opt = confirm('Do you want to create a new vimwiki?', "&Yes\n&No")
     if opt == 2
       return
     endif
+    let init_index = 1
     call mkdir(wiki_home, 'p')
     echomsg wiki_home .. ' has been created'
     let html_dir = g:wiki_config['html_dir']
@@ -317,11 +319,13 @@ fun! wiki#api#open_index()
   endif
   let index_path = s:markdown_path('index.md')
   silent exe 'edit ' .. index_path
-  call setline(1, '% Wiki Home')
-  call setline(2, '')
-  call setline(3, '<!-- edit your content below -->')
-  call setline(4, '')
-  call cursor(4, 0)
+  if init_index == 1
+    call setline(1, '% Wiki Home')
+    call setline(2, '')
+    call setline(3, '<!-- edit your content below -->')
+    call setline(4, '')
+    call cursor(4, 0)
+  endif
 endfun
 
 fun! wiki#api#open_html()
