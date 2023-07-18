@@ -76,12 +76,13 @@ endfun
 
 fun! s:edit_link(line)
   let title = matchstr(a:line, '\[\zs.*\ze\]')
-  let goto_file = matchstr(a:line, '(\zs.*\ze)')
+  let rel_filepath = matchstr(a:line, '(\zs.*\ze)')
+  let abs_filepath = s:join_path(expand('%:p:h'), rel_filepath)
   let file_exist = 1
-  if !filereadable(goto_file)
+  if !filereadable(abs_filepath)
     let file_exist = 0
   endif
-  let file_dir = fnamemodify(goto_file, ':h')
+  let file_dir = fnamemodify(abs_filepath, ':h')
   if !isdirectory(file_dir)
     let choice = input(printf('Create directory %s ? (y/n): ', file_dir))
     if empty(choice) || choice == 'y'
@@ -90,7 +91,7 @@ fun! s:edit_link(line)
       return
     endif
   endif
-  exe 'edit ' .. goto_file
+  exe 'edit ' .. abs_filepath
   if file_exist == 0
     call setline(1, '% ' .. title)
   endif
