@@ -178,12 +178,14 @@ fun! wiki#api#rename_link()
         let new_name = substitute(hint, " ", "_", "g")..'.md'
         let name = fnamemodify(md, ':t')
         let parent_dir = fnamemodify(md, ':h')
-        let new_mdpath = parent_dir.."/"..new_name
-        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_mdpath..')', '')
+        let newmd = parent_dir.."/"..new_name
+        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..newmd..')', '')
         call setline(line('.'), new_line)
-        " rename markdown and html files
-        call s:try_rename(md, new_mdpath)
         let parent_absdir = expand('%:p:h') .. '/' .. parent_dir
+        let md_abs = s:join_path(parent_absdir, md)
+        let newmd_abs = s:join_path(parent_absdir, newmd)
+        " rename markdown and html files
+        call s:try_rename(md_abs, newmd_abs)
         let reldir = s:relative_path_to(s:markdown_dir_path, parent_absdir)
         let htmlpath = s:html_path(reldir .. '/' .. substitute(name, '.md', '.html', ''))
         if !filereadable(htmlpath)
