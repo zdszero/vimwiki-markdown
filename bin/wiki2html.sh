@@ -15,9 +15,9 @@ else
 fi
 
 if [ $USE_TOC -eq 1 ]; then
-    toc = "--toc"
+    toc="--toc"
 else
-    toc = ""
+    toc=""
 fi
 
 # [test](test.md) -> <link href="test.html">
