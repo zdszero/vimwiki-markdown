@@ -318,7 +318,7 @@ fun! wiki#api#open_index()
     for dir in dirs
       call mkdir(s:join_path(wiki_home, dir), 'p')
     endfor
-    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/templates', s:get_home()])
+    call system(['cp', '-r', g:markdown_wiki_plug_dir..'/WikiTheme', s:html_dir_path])
   endif
   let index_path = s:markdown_path('index.md')
   silent exe 'edit ' .. index_path
