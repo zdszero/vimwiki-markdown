@@ -186,11 +186,8 @@ fun! wiki#image#markdown_clipboard_image()
       let extension = 'png'
     endif
     let relpath = g:mdip_imgdir_intext . '/' . g:mdip_tmpname . '.' . extension
-    execute "normal! i![I"
-    let ipos = getcurpos()
-    execute "normal! amage](" . relpath . ")"
-    call setpos('.', ipos)
-    execute "normal! ve\<C-g>"
+    echomsg "setline ...."
+    call setline('.', printf("![%s](%s)", g:mdip_tmpname, relpath))
   endif
 endfun
 
