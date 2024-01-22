@@ -9,7 +9,7 @@ if !exists('g:wiki_config')
     \ 'home': expand('~') .. '/Wiki',
     \ 'markdown_dir': 'sources',
     \ 'html_dir': 'docs',
-    \ 'template_path': 'templates/github.html',
+    \ 'theme': 'bootstrap',
     \}
 endif
 

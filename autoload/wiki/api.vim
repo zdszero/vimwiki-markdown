@@ -12,7 +12,7 @@ endfun
 
 let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
-let s:template_path = s:get_path('template_path')
+let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -372,7 +372,11 @@ fun! s:md2html(stem)
     call mkdir(html_dir, 'p')
   endif
   let md = s:join_path(s:markdown_dir_path, a:stem..'.md')
-  call system([s:script_path, md, html, s:template_path, g:wiki_generate_toc])
+  let theme = g:wiki_config['theme']
+  if theme !~# '\.css$'
+    let theme = theme .. '.css'
+  endif
+  call system([s:script_path, md, html, s:template_path, theme, g:wiki_generate_toc])
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif
