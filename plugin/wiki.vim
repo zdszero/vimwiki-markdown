@@ -17,6 +17,10 @@ if !exists('g:wiki_generate_toc')
   let g:wiki_generate_toc = 1
 endif
 
+if !exists('g:wiki_preview_port')
+  let g:wiki_preview_port = 8022
+endif
+
 nnoremap <silent><script> <Plug>(WikiIndex)
       \ :<c-u>call wiki#api#open_index()<CR>
 nnoremap <silent><script> <Plug>(WikiOpenHTML)

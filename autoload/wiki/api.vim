@@ -14,6 +14,7 @@ let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
+let s:http_jobid = -1
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "                 get html absolute path using relative path                 "
@@ -345,17 +346,21 @@ fun! wiki#api#open_html()
   let md_rel = substitute(expand('%:p'), s:markdown_dir_path, '', '')
   let html_rel = substitute(md_rel, '\.md$', '.html', '')
   let html_path = join([s:get_home(), g:wiki_config['html_dir'], html_rel], '/')
+  let open_path = '127.0.0.1:' .. g:wiki_preview_port .. html_rel
   if !filereadable(html_path)
     echomsg 'html has not been coverted for this markdown file'
     return
   endif
+  if s:http_jobid == -1
+    let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+  endif
   if exists('g:wiki_preview_browser')
-    silent! exe '!'..g:wiki_preview_browser..' '..html_path
+    silent! exe '!'..g:wiki_preview_browser..' '..open_path
   else
     let browsers = ['firefox', 'google-chrome', 'chromium']
     for browser in browsers
       let v:errmsg = ''
-      silent! exe '!'..browser..' '..html_path
+      silent! exe '!'..browser..' '..open_path
       if v:errmsg == ''
         break
       endif
