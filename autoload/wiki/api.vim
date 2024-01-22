@@ -381,6 +381,16 @@ fun! s:md2html(stem)
   if theme !~# '\.css$'
     let theme = theme .. '.css'
   endif
+  let target_theme = s:join_path(s:html_dir_path, 'WikiTheme/theme', theme)
+  let src_theme = s:join_path(g:markdown_wiki_plug_dir, 'WikiTheme/theme', theme)
+  if !filereadable(target_theme) && !filereadable(src_theme)
+    echoerr "Error: theme " .. theme " doesn't exist!"
+    return
+  endif
+  if filereadable(src_theme) && getftime(src_theme) > getftime(target_theme)
+    call system(printf("cp %s %s", src_theme, target_theme))
+    echomsg "Theme " .. theme .. " has been updated"
+  endif
   call system([s:script_path, md, html, s:template_path, theme, g:wiki_generate_toc])
   if !v:shell_error
     echomsg md..' has been converted to html'
