@@ -9,13 +9,7 @@ CSS_THEME=$4
 TOC=$5
 HIGHLIGHT=$6
 
-has_math=$(grep -o "\$.\+\$" "$INPUT")
-if [ -n "$has_math" ]; then
-    math="--mathjax=https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
-else
-    math=""
-fi
-
+math="--mathjax=https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
 css="--css=/WikiTheme/theme/$CSS_THEME"
 
 if [ $TOC -eq 1 ]; then
@@ -35,8 +29,3 @@ fi
 sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
     pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
     sed 's/\.\.\/docs/\./g' > $OUTPUT
-
-
-echo "sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
-    pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
-    sed 's/\.\.\/docs/\./g' > $OUTPUT"
