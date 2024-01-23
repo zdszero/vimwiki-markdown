@@ -6,7 +6,8 @@ INPUT=$1
 OUTPUT=$2
 TEMPLATE=$3
 CSS_THEME=$4
-USE_TOC=$5
+TOC=$5
+HIGHLIGHT=$6
 
 has_math=$(grep -o "\$.\+\$" "$INPUT")
 if [ -n "$has_math" ]; then
@@ -16,16 +17,26 @@ else
 fi
 
 css="--css=/WikiTheme/theme/$CSS_THEME"
-echo $css
 
-if [ $USE_TOC -eq 1 ]; then
+if [ $TOC -eq 1 ]; then
     toc="--toc"
 else
     toc=""
 fi
 
+if [ $HIGHLIGHT -eq 0 ]; then
+    highlight="--no-highlight"
+else
+    highlight=""
+fi
+
 # [test](test.md) -> <link href="test.html">
 # [test](test) -> <link href="test.html">
 sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
-    pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc |
+    pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
     sed 's/\.\.\/docs/\./g' > $OUTPUT
+
+
+echo "sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
+    pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
+    sed 's/\.\.\/docs/\./g' > $OUTPUT"

@@ -369,8 +369,30 @@ fun! wiki#api#open_html()
   redraw
 endfun
 
+fun! s:parse_metadata(mdpath)
+  let opts = {}
+  let lines = readfile(a:mdpath)
+  if len(lines) == 0
+    return
+  endif
+  if lines[0] == '---'
+    let lineno = 1
+    while lineno < len(lines)
+      let line = lines[lineno]
+      if line == '---' || line == '...'
+        break
+      endif
+      let parts = split(line, '\v[: ]+')
+      if len(parts) == 2
+        let opts[parts[0]] = parts[1]
+      endif
+      let lineno = lineno + 1
+    endwhile
+  endif
+  return opts
+endfun
+
 fun! s:md2html(stem)
-  " let depth = count(a:stem, '/')
   let html = s:join_path(s:html_dir_path, a:stem..'.html')
   let html_dir = fnamemodify(html, ':h')
   if !isdirectory(html_dir)
@@ -391,7 +413,20 @@ fun! s:md2html(stem)
     call system(printf("cp %s %s", src_theme, target_theme))
     echomsg "Theme " .. theme .. " has been updated"
   endif
-  call system([s:script_path, md, html, s:template_path, theme, g:wiki_generate_toc])
+  let opts = s:parse_metadata(md)
+  let enable_highlight = 1
+  if has_key(opts, 'enable_highlight')
+    if opts['enable_highlight'] =~ 'false' || opts['enable_highlight'] == '0'
+      let enable_highlight = 0
+    endif
+  endif
+  let enable_toc = 1
+  if has_key(opts, 'enable_toc')
+    if opts['enable_toc'] =~ 'false' || opts['enable_toc'] == '0'
+      let enable_toc = 0
+    endif
+  endif
+  call system([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight])
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif

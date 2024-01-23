@@ -1,6 +1,7 @@
 if exists('g:wiki_loaded')
   finish
 endif
+let g:mdip_imgdir = 'WikiImage'
 let g:wiki_loaded = 1
 let g:markdown_wiki_plug_dir = expand('<sfile>:p:h:h')
 
@@ -11,10 +12,6 @@ if !exists('g:wiki_config')
     \ 'html_dir': 'docs',
     \ 'theme': 'bootstrap',
     \}
-endif
-
-if !exists('g:wiki_generate_toc')
-  let g:wiki_generate_toc = 1
 endif
 
 if !exists('g:wiki_preview_port')
