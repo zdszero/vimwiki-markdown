@@ -27,31 +27,19 @@
   $if(date-meta)$
   <meta name="date" content="$date-meta$" />
   $endif$
-  <title>$if(title-prefix)$$title-prefix$ - $endif$$pagetitle$</title>
-  <style type="text/css">
-    code {
-      white-space: pre;
-    }
-
-  </style>
-  $if(quotes)$
-  <style type="text/css">
-    q {
-      quotes: "“" "”" "‘" "’";
-    }
-
-  </style>
+  <title>
+    $if(title-prefix)$$title-prefix$ - $endif$$pagetitle$
+  </title>
+  $for(css)$
+  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$ />
+  $endfor$
+  $if(math)$
+    $math$
   $endif$
   $if(highlighting-css)$
   <style type="text/css">
     $highlighting-css$
   </style>
-  $endif$
-  $for(css)$
-  <link rel="stylesheet" href="$css$" $if(html5)$$else$type="text/css" $endif$ />
-  $endfor$
-  $if(math)$
-  $math$
   $endif$
   $for(header-includes)$
   $header-includes$
@@ -59,23 +47,24 @@
 </head>
 
 <body>
-
-
   $if(title)$
   <div class="navbar navbar-static-top">
     <div class="navbar-inner">
       <div class="container">
         <span class="doc-title">$title$</span>
         <ul class="nav pull-right doc-info">
-          $for(author)$
-          <li>
-            <p class="navbar-text">$author$</p>
-          </li>
-          $endfor$
+          <p class="navbar-text">
+              $if(date)$
+                $date$&emsp;&emsp;
+              $endif$
+              $if(author)$
+                $author$&emsp;&emsp;
+              $endif$
+              $if(description)$
+                $description$
+              $endif$
+            </p>
           $if(date)$
-          <li>
-            <p class="navbar-text">$date$</p>
-          </li>
           $endif$
         </ul>
       </div>
@@ -87,7 +76,6 @@
       $if(toc)$
       <div id="$idprefix$TOC" class="span3">
         <div class="well toc">
-
           $toc$
         </div>
       </div>

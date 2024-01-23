@@ -399,20 +399,6 @@ fun! s:md2html(stem)
     call mkdir(html_dir, 'p')
   endif
   let md = s:join_path(s:markdown_dir_path, a:stem..'.md')
-  let theme = g:wiki_config['theme']
-  if theme !~# '\.css$'
-    let theme = theme .. '.css'
-  endif
-  let target_theme = s:join_path(s:html_dir_path, 'WikiTheme/theme', theme)
-  let src_theme = s:join_path(g:markdown_wiki_plug_dir, 'WikiTheme/theme', theme)
-  if !filereadable(target_theme) && !filereadable(src_theme)
-    echoerr "Error: theme " .. theme " doesn't exist!"
-    return
-  endif
-  if filereadable(src_theme) && getftime(src_theme) > getftime(target_theme)
-    call system(printf("cp %s %s", src_theme, target_theme))
-    echomsg "Theme " .. theme .. " has been updated"
-  endif
   let opts = s:parse_metadata(md)
   let enable_highlight = 1
   if has_key(opts, 'enable_highlight')
@@ -425,6 +411,23 @@ fun! s:md2html(stem)
     if opts['enable_toc'] =~ 'false' || opts['enable_toc'] == '0'
       let enable_toc = 0
     endif
+  endif
+  let theme = g:wiki_config['theme']
+  if has_key(opts, 'theme')
+    let theme = opts['theme']
+  endif
+  if theme !~# '\.css$'
+    let theme = theme .. '.css'
+  endif
+  let target_theme = s:join_path(s:html_dir_path, 'WikiTheme/theme', theme)
+  let src_theme = s:join_path(g:markdown_wiki_plug_dir, 'WikiTheme/theme', theme)
+  if !filereadable(target_theme) && !filereadable(src_theme)
+    echoerr "Error: theme " .. theme " doesn't exist!"
+    return
+  endif
+  if filereadable(src_theme) && getftime(src_theme) > getftime(target_theme)
+    call system(printf("cp %s %s", src_theme, target_theme))
+    echomsg "Theme " .. theme .. " has been updated"
   endif
   call system([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight])
   if !v:shell_error

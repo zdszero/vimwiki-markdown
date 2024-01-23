@@ -1,44 +1,3 @@
-/*!
-  This is a modified version of Bootstrap.
-  Bootstrap code comes first, customizations are at the end of the file.
-*/
-
-/*!
- * Bootstrap v2.3.2
- *
- * Copyright 2012 Twitter, Inc
- * Licensed under the Apache License v2.0
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Designed and built with all the love in the world @twitter by @mdo and @fat.
- */
-.clearfix {
-  *zoom: 1;
-}
-.clearfix:before,
-.clearfix:after {
-  display: table;
-  content: "";
-  line-height: 0;
-}
-.clearfix:after {
-  clear: both;
-}
-.hide-text {
-  font: 0/0 a;
-  color: transparent;
-  text-shadow: none;
-  background-color: transparent;
-  border: 0;
-}
-.input-block-level {
-  display: block;
-  width: 100%;
-  min-height: 30px;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
 article,
 aside,
 details,
@@ -89,17 +48,9 @@ sub {
   bottom: -0.25em;
 }
 img {
-  /* Responsive images (ensure images don't scale beyond their parents) */
-
   max-width: 100%;
-  /* Part 1: Set a maxium relative to the parent */
-
   width: auto\9;
-  /* IE7-8 need help adjusting responsive images */
-
   height: auto;
-  /* Part 2: Scale the height according to the width, otherwise you get stretching */
-
   vertical-align: middle;
   border: 0;
   -ms-interpolation-mode: bicubic;
@@ -158,6 +109,9 @@ textarea {
   vertical-align: top;
 }
 @media print {
+  .well {
+    display: none;
+  }
   * {
     text-shadow: none !important;
     color: #000 !important;
@@ -207,42 +161,6 @@ textarea {
   h3 {
     page-break-after: avoid;
   }
-}
-body {
-  margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  line-height: 20px;
-  color: #333333;
-  background-color: #ffffff;
-}
-a {
-  color: #0088cc;
-  text-decoration: none;
-}
-a:hover,
-a:focus {
-  color: #005580;
-  text-decoration: underline;
-}
-.img-rounded {
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px;
-}
-.img-polaroid {
-  padding: 4px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-.img-circle {
-  -webkit-border-radius: 500px;
-  -moz-border-radius: 500px;
-  border-radius: 500px;
 }
 .row {
   margin-left: -20px;
@@ -553,12 +471,6 @@ a:focus {
 p {
   margin: 0 0 10px;
 }
-.lead {
-  margin-bottom: 20px;
-  font-size: 21px;
-  font-weight: 200;
-  line-height: 30px;
-}
 small {
   font-size: 85%;
 }
@@ -570,50 +482,6 @@ em {
 }
 cite {
   font-style: normal;
-}
-.muted {
-  color: #999999;
-}
-a.muted:hover,
-a.muted:focus {
-  color: #808080;
-}
-.text-warning {
-  color: #c09853;
-}
-a.text-warning:hover,
-a.text-warning:focus {
-  color: #a47e3c;
-}
-.text-error {
-  color: #b94a48;
-}
-a.text-error:hover,
-a.text-error:focus {
-  color: #953b39;
-}
-.text-info {
-  color: #3a87ad;
-}
-a.text-info:hover,
-a.text-info:focus {
-  color: #2d6987;
-}
-.text-success {
-  color: #468847;
-}
-a.text-success:hover,
-a.text-success:focus {
-  color: #356635;
-}
-.text-left {
-  text-align: left;
-}
-.text-right {
-  text-align: right;
-}
-.text-center {
-  text-align: center;
 }
 h1,
 h2,
@@ -771,34 +639,8 @@ blockquote {
 }
 blockquote p {
   margin-bottom: 0;
-  font-size: 17.5px;
   font-weight: 300;
   line-height: 1.25;
-}
-blockquote small {
-  display: block;
-  line-height: 20px;
-  color: #999999;
-}
-blockquote small:before {
-  content: '\2014 \00A0';
-}
-blockquote.pull-right {
-  float: right;
-  padding-right: 15px;
-  padding-left: 0;
-  border-right: 5px solid #eeeeee;
-  border-left: 0;
-}
-blockquote.pull-right p,
-blockquote.pull-right small {
-  text-align: right;
-}
-blockquote.pull-right small:before {
-  content: '';
-}
-blockquote.pull-right small:after {
-  content: '\00A0 \2014';
 }
 q:before,
 q:after,
@@ -846,9 +688,6 @@ pre {
   -moz-border-radius: 4px;
   border-radius: 4px;
 }
-pre.prettyprint {
-  margin-bottom: 20px;
-}
 pre code {
   padding: 0;
   color: inherit;
@@ -856,10 +695,6 @@ pre code {
   white-space: pre-wrap;
   background-color: transparent;
   border: 0;
-}
-.pre-scrollable {
-  max-height: 340px;
-  overflow-y: scroll;
 }
 table {
   max-width: 100%;
@@ -1343,96 +1178,6 @@ table th[class*="span"],
 }
 .tabbable:after {
   clear: both;
-}
-.tab-content {
-  overflow: auto;
-}
-.tabs-below > .nav-tabs,
-.tabs-right > .nav-tabs,
-.tabs-left > .nav-tabs {
-  border-bottom: 0;
-}
-.tab-content > .tab-pane,
-.pill-content > .pill-pane {
-  display: none;
-}
-.tab-content > .active,
-.pill-content > .active {
-  display: block;
-}
-.tabs-below > .nav-tabs {
-  border-top: 1px solid #ddd;
-}
-.tabs-below > .nav-tabs > li {
-  margin-top: -1px;
-  margin-bottom: 0;
-}
-.tabs-below > .nav-tabs > li > a {
-  -webkit-border-radius: 0 0 4px 4px;
-  -moz-border-radius: 0 0 4px 4px;
-  border-radius: 0 0 4px 4px;
-}
-.tabs-below > .nav-tabs > li > a:hover,
-.tabs-below > .nav-tabs > li > a:focus {
-  border-bottom-color: transparent;
-  border-top-color: #ddd;
-}
-.tabs-below > .nav-tabs > .active > a,
-.tabs-below > .nav-tabs > .active > a:hover,
-.tabs-below > .nav-tabs > .active > a:focus {
-  border-color: transparent #ddd #ddd #ddd;
-}
-.tabs-left > .nav-tabs > li,
-.tabs-right > .nav-tabs > li {
-  float: none;
-}
-.tabs-left > .nav-tabs > li > a,
-.tabs-right > .nav-tabs > li > a {
-  min-width: 74px;
-  margin-right: 0;
-  margin-bottom: 3px;
-}
-.tabs-left > .nav-tabs {
-  float: left;
-  margin-right: 19px;
-  border-right: 1px solid #ddd;
-}
-.tabs-left > .nav-tabs > li > a {
-  margin-right: -1px;
-  -webkit-border-radius: 4px 0 0 4px;
-  -moz-border-radius: 4px 0 0 4px;
-  border-radius: 4px 0 0 4px;
-}
-.tabs-left > .nav-tabs > li > a:hover,
-.tabs-left > .nav-tabs > li > a:focus {
-  border-color: #eeeeee #dddddd #eeeeee #eeeeee;
-}
-.tabs-left > .nav-tabs .active > a,
-.tabs-left > .nav-tabs .active > a:hover,
-.tabs-left > .nav-tabs .active > a:focus {
-  border-color: #ddd transparent #ddd #ddd;
-  *border-right-color: #ffffff;
-}
-.tabs-right > .nav-tabs {
-  float: right;
-  margin-left: 19px;
-  border-left: 1px solid #ddd;
-}
-.tabs-right > .nav-tabs > li > a {
-  margin-left: -1px;
-  -webkit-border-radius: 0 4px 4px 0;
-  -moz-border-radius: 0 4px 4px 0;
-  border-radius: 0 4px 4px 0;
-}
-.tabs-right > .nav-tabs > li > a:hover,
-.tabs-right > .nav-tabs > li > a:focus {
-  border-color: #eeeeee #eeeeee #eeeeee #dddddd;
-}
-.tabs-right > .nav-tabs .active > a,
-.tabs-right > .nav-tabs .active > a:hover,
-.tabs-right > .nav-tabs .active > a:focus {
-  border-color: #ddd #ddd #ddd transparent;
-  *border-left-color: #ffffff;
 }
 .nav > .disabled > a {
   color: #999999;
@@ -3032,11 +2777,21 @@ table th[class*="span"],
   }
 }
 
+.doc-title { 
+  float: left;
+  display: block;
+  padding: 10px 20px 10px;
+  margin-left: -20px;
+  font-size: 20px;
+  font-weight: 200;
+  color: #777777;
+  text-shadow: 0 1px 0 #ffffff;
+}
 
-/* CUSTOMIZATIONS */
-.doc-title { float: left; display: block; padding: 10px 20px 10px; margin-left: -20px;
-  font-size: 20px; font-weight: 200; color: #777777; text-shadow: 0 1px 0 #ffffff; }
-.doc-info .navbar-text { padding: 0 15px; }
+.doc-info .navbar-text {
+  padding: 0 15px;
+}
+
 h1 a { color: #333; } h2 a { color: #333; } h3 a { color: #333; }
 h4 a { color: #333; } h5 a { color: #333; } h6 a { color: #333; }
 h1:hover a { color: #333; } h2:hover a { color: #333; } h3:hover a { color: #333; }
@@ -3047,39 +2802,5 @@ h4:hover a { color: #333; } h5:hover a { color: #333; } h6:hover a { color: #333
 .toc ul > li > a { display: block; }
 .toc ul > li > a:hover,
 .toc ul > li > a:focus { text-decoration: none; background-color: #eeeeee; }
-.toc ul { margin-bottom: 0; padding-left: 5px;padding-right: 5px;}
+.toc ul { margin-bottom: 0; padding-left: 5px; padding-right: 5px;}
 .toc ul > li > a, .toc ul > li > a { padding: 3px 15px; }
-
-
-#TOC {    
-    overflow-y: scroll;
-    top: 0;
-    bottom: 0;
-}
-
-table {
-    min-width: 100%
-}
-
-.video-js {
-    min-width:100%; 
-    max-width:100%;
-}
-
-.vjs-fullscreen {
-    padding-top: 0px
-}
-
-::-webkit-scrollbar {
-  width: 12px;  /* for vertical scrollbars */
-  height: 12px; /* for horizontal scrollbars */
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.5);
-}
-
