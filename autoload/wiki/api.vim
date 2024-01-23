@@ -332,6 +332,13 @@ fun! wiki#api#open_index()
   endif
 endfun
 
+fun! wiki#api#run_http_server()
+  if s:http_jobid == -1
+    let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+    echomsg "http server is running on port " .. g:wiki_preview_port
+  endif
+endfun
+
 fun! wiki#api#open_html()
   let l:curfile = expand('%')
   let bufpath = expand('%:p:h')
@@ -351,9 +358,7 @@ fun! wiki#api#open_html()
     echomsg 'html has not been coverted for this markdown file'
     return
   endif
-  if s:http_jobid == -1
-    let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
-  endif
+  call wiki#api#run_http_server()
   if exists('g:wiki_preview_browser')
     silent! exe '!'..g:wiki_preview_browser..' '..open_path
   else
