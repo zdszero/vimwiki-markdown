@@ -296,7 +296,7 @@ fun! wiki#api#delete_link()
 endfun
 
 fun! wiki#api#paste_image()
-  let image_dir = s:html_dir_path .. '/images'
+  let image_dir = s:html_dir_path .. '/WikiImage'
   let g:mdip_imgdir = s:relative_path_to(expand('%:p'), image_dir)
   call wiki#image#markdown_clipboard_image()
 endfun
@@ -334,9 +334,28 @@ endfun
 
 fun! wiki#api#run_http_server()
   if s:http_jobid == -1
-    let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+    if has("nvim")
+      let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+    else
+      let s:http_jobid = job_start(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+    endif
     echomsg "http server is running on port " .. g:wiki_preview_port
   endif
+endfun
+
+fun! s:open_html_in_browser(html_path)
+  if exists('g:wiki_preview_browser')
+    exe '!'..g:wiki_preview_browser..' '..a:html_path
+  else
+    let browsers = ['firefox', 'google-chrome', 'chromium', 'brave', 'safari']
+    for browser in browsers
+      if executable(browser)
+        exe '!'..browser..' '..a:html_path
+        break
+      endif
+    endfor
+  endif
+  redraw
 endfun
 
 fun! wiki#api#open_html()
@@ -359,19 +378,7 @@ fun! wiki#api#open_html()
     return
   endif
   call wiki#api#run_http_server()
-  if exists('g:wiki_preview_browser')
-    silent! exe '!'..g:wiki_preview_browser..' '..open_path
-  else
-    let browsers = ['firefox', 'google-chrome', 'chromium']
-    for browser in browsers
-      let v:errmsg = ''
-      silent! exe '!'..browser..' '..open_path
-      if v:errmsg == ''
-        break
-      endif
-    endfor
-  endif
-  redraw
+  call s:open_html_in_browser(open_path)
 endfun
 
 fun! s:parse_metadata(mdpath)

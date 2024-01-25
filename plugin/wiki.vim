@@ -1,7 +1,6 @@
 if exists('g:wiki_loaded')
   finish
 endif
-let g:mdip_imgdir = 'WikiImage'
 let g:wiki_loaded = 1
 let g:markdown_wiki_plug_dir = expand('<sfile>:p:h:h')
 
