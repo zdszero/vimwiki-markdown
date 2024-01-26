@@ -8,9 +8,22 @@ TEMPLATE=$3
 CSS_THEME=$4
 TOC=$5
 HIGHLIGHT=$6
+DEPTH=$7
 
 math="--mathjax=https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
-css="--css=/WikiTheme/theme/$CSS_THEME"
+
+relative_to_root=""
+escaped_relative_to_root=""
+for ((i=1; i<=$DEPTH; i++)); do
+    relative_to_root="${relative_to_root}../"
+    escaped_relative_to_root="${escaped_relative_to_root}\.\.\/"
+done
+
+if [ $DEPTH -gt 0 ]; then
+    css="--css=${relative_to_root}WikiTheme/theme/$CSS_THEME"
+else
+    css="--css=./WikiTheme/theme/$CSS_THEME"
+fi
 
 if [ $TOC -eq 1 ]; then
     toc="--toc"
@@ -24,8 +37,10 @@ else
     highlight=""
 fi
 
-# [test](test.md) -> <link href="test.html">
-# [test](test) -> <link href="test.html">
 sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
     pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
     sed 's/\.\.\/docs/\./g' > $OUTPUT
+
+if [ $DEPTH -gt 0 ]; then
+    sed -ri "/<head>/,/<\/head>/ s/((src|href)=\")(\.\/)/\1${escaped_relative_to_root}/g" $OUTPUT
+fi

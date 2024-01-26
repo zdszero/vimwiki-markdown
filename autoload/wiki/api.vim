@@ -405,6 +405,7 @@ fun! s:parse_metadata(mdpath)
 endfun
 
 fun! s:md2html(stem)
+  let depth = count(a:stem, '/')
   let html = s:join_path(s:html_dir_path, a:stem..'.html')
   let html_dir = fnamemodify(html, ':h')
   if !isdirectory(html_dir)
@@ -441,7 +442,7 @@ fun! s:md2html(stem)
     call system(printf("cp %s %s", src_theme, target_theme))
     echomsg "Theme " .. theme .. " has been updated"
   endif
-  call system([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight])
+  call system([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth])
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif
