@@ -39,7 +39,10 @@ fi
 
 sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
     pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
-    sed 's/\.\.\/docs/\./g' > $OUTPUT
+    sed -r "/<body>/,/<\/body>/ {
+        s/\.\.\/docs/\./g
+        s/(href=\")(\/)/\1${escaped_relative_to_root}/g
+    }" > $OUTPUT
 
 if [ $DEPTH -gt 0 ]; then
     sed -ri "/<head>/,/<\/head>/ s/((src|href)=\")(\.\/)/\1${escaped_relative_to_root}/g" $OUTPUT

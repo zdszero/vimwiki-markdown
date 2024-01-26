@@ -75,10 +75,22 @@ fun! wiki#api#goto_parent_link()
   endif
 endfun
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"         get absolute filepath using link in current markdown link          "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:get_abs_path(filepath)
+  if a:filepath =~# '^/'
+    let abs_filepath = s:markdown_path(a:filepath)
+  else
+    let abs_filepath = s:join_path(expand('%:p:h'), a:filepath)
+  endif
+  return abs_filepath
+endfun
+
 fun! s:edit_link(line)
   let title = matchstr(a:line, '\[\zs.*\ze\]')
-  let rel_filepath = matchstr(a:line, '(\zs.*\ze)')
-  let abs_filepath = s:join_path(expand('%:p:h'), rel_filepath)
+  let filepath = matchstr(a:line, '(\zs.*\ze)')
+  let abs_filepath = s:get_abs_path(filepath)
   let file_exist = 1
   if !filereadable(abs_filepath)
     let file_exist = 0
