@@ -30,7 +30,6 @@ fun! s:markdown_path(md_rel)
   return s:markdown_dir_path..'/'..a:md_rel
 endfun
 
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "                      change path suffix from md to html                    "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -62,15 +61,10 @@ fun! s:relative_path_to(parent, child)
 endfun
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-"        get current directory's relateive path to markdown directory        "
+"     convert a markdown or directory absolute path from sources to docs     "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-fun! s:cur_dir_relative_path_to_root()
-  let dir_abs = expand('%:p:h')
-  return s:relative_path_to(s:markdown_dir_path, dir_abs)
-endfun
-
-fun! s:abs2root(abspath)
-  return s:relative_path_to(s:markdown_dir_path, a:abspath)
+fun! s:abs_sources2docs(md_abspath)
+  return substitute(s:html_path(s:relative_path_to(s:markdown_dir_path, a:md_abspath)), '.md$', '.html', '')
 endfun
 
 fun! wiki#api#goto_parent_link()
@@ -89,6 +83,9 @@ endfun
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "         get absolute filepath using link in current markdown link          "
+"         Two types of link:                                                 "
+"           1. [hint](/Dir1/Dir2/Filename)                                   "
+"           2. [hint](./Dir/Filename)                                        "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:get_abs_path(filepath)
   if a:filepath =~# '^/'
@@ -159,6 +156,9 @@ fun! wiki#api#create_follow_directory()
 endfun
 
 fun! s:try_rename(from, to)
+  if !filereadable(a:from)
+    return
+  endif
   let res = rename(a:from, a:to)
   if res != 0
     echoerr 'fail to rename '..a:from..' to '..a:to
@@ -174,7 +174,7 @@ endfun
 " rename markdown and html file of current link, if cuurent link is index    "
 " file, rename the directory                                                 "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-fun! wiki#api#rename_link()
+fun! wiki#api#rename_link() abort
   let line = getline('.')
   let md = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
   if !empty(md)
@@ -185,14 +185,13 @@ fun! wiki#api#rename_link()
         if empty(hint)
           return
         endif
-        let dir = fnamemodify(md, ':h')
-        let dir_rel = s:join_path(s:cur_dir_relative_path_to_root(), dir)
-        let dir_abs = s:markdown_path(dir_rel)
-        let dir_html_abs = s:html_path(dir_rel)
-        call s:rename_directory(dir_abs, hint)
-        call s:rename_directory(dir_html_abs, hint)
-        let new_link = s:join_path(fnamemodify(dir, ':h'), hint, 'index.md')
-        let hint = hint .. ' index'
+        let new_dirname = substitute(hint, " ", "_", "g")
+        let dirpath = fnamemodify(md, ':h')
+        let dir_abspath = s:get_abs_path(dirpath)
+        let html_dir_abspath = s:abs_sources2docs(dir_abspath)
+        call s:rename_directory(dir_abspath, hint)
+        call s:rename_directory(html_dir_abspath, hint)
+        let new_link = s:join_path(fnamemodify(dirpath, ':h'), new_dirname, 'index.md')
         let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_link..')', '')
         call setline(line('.'), new_line)
       else
@@ -202,22 +201,13 @@ fun! wiki#api#rename_link()
         endif
         let new_name = substitute(hint, " ", "_", "g")..'.md'
         let name = fnamemodify(md, ':t')
-        let parent_dir = fnamemodify(md, ':h')
-        let newmd = parent_dir.."/"..new_name
-        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..newmd..')', '')
+        let new_md = fnamemodify(md, ':h').."/"..new_name
+        let md_abs = s:get_abs_path(md)
+        let new_md_abs = s:get_abs_path(new_md)
+        call s:try_rename(md_abs, new_md_abs)
+        call s:try_rename(s:abs_sources2docs(md_abs), s:abs_sources2docs(new_md_abs))
+        let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_md..')', '')
         call setline(line('.'), new_line)
-        let parent_absdir = expand('%:p:h') .. '/' .. parent_dir
-        let md_abs = s:join_path(parent_absdir, md)
-        let newmd_abs = s:join_path(parent_absdir, newmd)
-        " rename markdown and html files
-        call s:try_rename(md_abs, newmd_abs)
-        let reldir = s:relative_path_to(s:markdown_dir_path, parent_absdir)
-        let htmlpath = s:html_path(reldir .. '/' .. s:suffix_md2html(name))
-        if !filereadable(htmlpath)
-          return
-        endif
-        let new_htmlpath = s:html_path(reldir .. '/' .. s:suffix_md2html(new_name))
-        call s:try_rename(htmlpath, new_htmlpath)
       endif
     else
       echomsg 'current link is not a markdown link, which cannot be renamed!'
@@ -261,7 +251,7 @@ endfun
 fun! s:delete_markdown(md_abspath)
   let name = fnamemodify(a:md_abspath, ':t')
   let html_name = s:suffix_md2html(name)
-  let html_abspath = s:html_path(s:suffix_md2html(s:abs2root(a:md_abspath)))
+  let html_abspath = s:abs_sources2docs(a:md_abspath)
   call s:delete_images_in_markdown(a:md_abspath)
   call delete(a:md_abspath)
   call delete(html_abspath)
@@ -275,9 +265,8 @@ fun! s:delete_directory(abs_dirpath)
   for abs_mdpath in split(globpath(a:abs_dirpath, '**/*.md'))
     call s:delete_markdown(abs_mdpath)
   endfor
-  let dir2root = s:abs2root(a:abs_dirpath)
   call system(['rm', '-rf', a:abs_dirpath])
-  call system(['rm', '-rf', s:html_path(dir2root)])
+  call system(['rm', '-rf', s:abs_sources2docs(a:abs_dirpath)])
 endfun
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
