@@ -308,7 +308,7 @@ fun! wiki#api#paste_image()
   call wiki#image#markdown_clipboard_image()
 endfun
 
-fun! wiki#api#open_index()
+fun! wiki#api#open_home()
   let wiki_home = s:get_home()
   let init_index = 0
   if !isdirectory(wiki_home)
@@ -321,7 +321,7 @@ fun! wiki#api#open_index()
     echomsg wiki_home .. ' has been created'
     let html_dir = g:wiki_config['html_dir']
     let md_dir = g:wiki_config['markdown_dir']
-    let img_dir = html_dir..'/images'
+    let img_dir = html_dir..'/WikiImage'
     let dirs = [html_dir, md_dir, img_dir]
     for dir in dirs
       call mkdir(s:join_path(wiki_home, dir), 'p')

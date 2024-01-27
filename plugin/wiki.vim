@@ -26,7 +26,7 @@ fun! s:wiki_call(func_call)
 endfun
 
 nnoremap <silent><script> <Plug>(WikiHome)
-      \ :<c-u>call wiki#api#open_index()<CR>
+      \ :<c-u>call wiki#api#open_home()<CR>
 nnoremap <silent><script> <Plug>(WikiOpenHTML)
       \ :<c-u>call <SID>wiki_call("wiki#api#open_html()")<CR>
 nnoremap <silent><script> <Plug>(WikiCreateFollowLink)
@@ -50,7 +50,7 @@ nnoremap <silent><script> <Plug>(WikiAll2HTML)
 nnoremap <silent><script> <Plug>(WikiClean)
       \ :<c-u>call <SID>wiki_call("wiki#api#wiki_all2html(v:false)")<CR>
 
-command! WikiHome                  call wiki#api#open_index()
+command! WikiHome                  call wiki#api#open_home()
 command! WikiDelete                call <SID>wiki_call("wiki#api#delete_link()")
 command! WikiRename                call <SID>wiki_call("wiki#api#rename_link()")
 command! WikiCreateFollowLink      call <SID>wiki_call("wiki#api#create_follow_link()")
