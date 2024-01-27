@@ -37,7 +37,7 @@ else
     highlight=""
 fi
 
-sed -r 's/(\[.+\])\((.+)\.md\)/\1(\2.html)/g' < $INPUT |
+sed -r 's/(\[.+\])\((.+)\.md(.*)\)/\1(\2.html\3)/g' < $INPUT |
     pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
     sed -r "/<body>/,/<\/body>/ {
         s/\.\.\/docs/\./g

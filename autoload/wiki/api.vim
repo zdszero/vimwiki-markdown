@@ -107,7 +107,7 @@ fun! s:edit_link(line)
   let file_dir = fnamemodify(abs_filepath, ':h')
   if !isdirectory(file_dir)
     let choice = input(printf('Create directory %s ? (y/n): ', file_dir))
-    if empty(choice) || choice == 'y'
+    if empty(choice) || tolower(choice) == 'y'
       call mkdir(file_dir, 'p')
     else
       return
@@ -567,18 +567,52 @@ fun! wiki#api#clean()
   endfor
 endfun
 
-fun! s:set_ref_link()
+fun! s:append_to_tail(lnum, content)
+  let original = getline(a:lnum)
+  let later = original .. a:content
+  call setline(a:lnum, later)
+endfun
+
+let s:wiki_ref_link = ''
+
+fun! s:choose_ref_fragment()
+  let line = getline('.')
+  bd!
+  let fragment = matchstr(line, '\v#+ \zs.*\ze')
+  call s:append_to_tail(line('.'), printf('[%s](%s#%s)', fragment, s:wiki_ref_link, fragment))
+endfun
+
+fun! s:choose_ref_file()
   let link = getline('.')
   bd!
+  let md_abspath = s:markdown_path(link)
+  if !filereadable(md_abspath)
+    return
+  endif
+  let fragments = system('grep -E "#+ .*" ' .. md_abspath)
   let hint = substitute(substitute(fnamemodify(link, ':t'), '.md$', '', ''), '_', ' ', 'g')
-  call setline(line('.'), printf('[%s](%s)', hint, link))
+  if !empty(fragments)
+    let choice = input(printf('Do you want to refer to a fragment in %s ? (y/n): ', hint))
+    echo ""
+    if tolower(choice) == 'y'
+      botright new
+      call setline(1, split(fragments, '\n'))
+      setlocal readonly
+      let s:wiki_ref_link = link
+      nmap <silent> <buffer> <cr> :<C-u>call <SID>choose_ref_fragment()<CR>
+      echo "choose a fragment to refer to (using Enter key)"
+      return
+    endif
+  endif
+  call s:append_to_tail(line('.'), printf('[%s](%s)', hint, link))
 endfun
 
 fun! wiki#api#add_reference()
   let mds = map(split(globpath(s:markdown_dir_path, '**/*.md'), '\n'), "substitute(v:val, s:markdown_dir_path, '', '')")
-  botright new
+  botright new wiki\ reference
   setlocal ft=wiki-reference
   call setline(1, mds)
   setlocal readonly
-  nmap <silent> <buffer> <cr> :<C-u>call <SID>set_ref_link()<CR>
+  nmap <silent> <buffer> <cr> :<C-u>call <SID>choose_ref_file()<CR>
+  echo "choose a markdown file to refer to (using Enter key)"
 endfun
