@@ -333,9 +333,8 @@ fun! wiki#api#open_index()
   if init_index == 1
     call setline(1, '% Wiki Home')
     call setline(2, '')
-    call setline(3, '<!-- edit your content below -->')
-    call setline(4, '')
-    call cursor(4, 0)
+    call setline(3, '')
+    call cursor(3, 0)
   endif
 endfun
 
@@ -566,4 +565,20 @@ fun! wiki#api#clean()
     call delete(html)
     echo 'remove ' .. html
   endfor
+endfun
+
+fun! s:set_ref_link()
+  let link = getline('.')
+  bd!
+  let hint = substitute(substitute(fnamemodify(link, ':t'), '.md$', '', ''), '_', ' ', 'g')
+  call setline(line('.'), printf('[%s](%s)', hint, link))
+endfun
+
+fun! wiki#api#add_reference()
+  let mds = map(split(globpath(s:markdown_dir_path, '**/*.md'), '\n'), "substitute(v:val, s:markdown_dir_path, '', '')")
+  botright new
+  setlocal ft=wiki-reference
+  call setline(1, mds)
+  setlocal readonly
+  nmap <silent> <buffer> <cr> :<C-u>call <SID>set_ref_link()<CR>
 endfun
