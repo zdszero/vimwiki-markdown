@@ -99,6 +99,10 @@ endfun
 fun! s:edit_link(line)
   let title = matchstr(a:line, '\[\zs.*\ze\]')
   let filepath = matchstr(a:line, '(\zs.*\ze)')
+  let fragment = matchstr(filepath, '#\zs.*\ze$')
+  if !empty(fragment)
+    let filepath = substitute(filepath, '#'..fragment, '', '')
+  endif
   let abs_filepath = s:get_abs_path(filepath)
   let file_exist = 1
   if !filereadable(abs_filepath)
@@ -114,6 +118,11 @@ fun! s:edit_link(line)
     endif
   endif
   exe 'edit ' .. abs_filepath
+  if !empty(fragment)
+    exe '/'..fragment
+    nohlsearch
+    normal! zt
+  endif
   if file_exist == 0
     call setline(1, '% ' .. title)
   endif
@@ -595,7 +604,7 @@ fun! s:choose_ref_file()
     let choice = input(printf('Do you want to refer to a fragment in %s ? (y/n): ', hint))
     echo ""
     if tolower(choice) == 'y'
-      botright new
+      botright new wiki\ reference
       call setline(1, split(fragments, '\n'))
       setlocal readonly
       let s:wiki_ref_link = link
