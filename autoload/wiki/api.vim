@@ -380,7 +380,7 @@ fun! wiki#api#open_html()
     echoerr 'the current file is not in wiki home directory!'
     return
   endif
-  if &ft != 'markdown'
+  if expand('%') !~# '.md$'
     echoerr &ft .. ' is not markdown'
     return
   endif
@@ -506,7 +506,7 @@ fun! s:convert_current()
     echoerr 'the current file is not in wiki home directory and cannot be converted to html'
     return
   endif
-  if &ft != 'markdown'
+  if expand('%') !~# '.md$'
     echoerr &ft .. ' cannot be converted to html'
     return
   endif
@@ -587,7 +587,11 @@ let s:wiki_ref_link = ''
 fun! s:choose_ref_fragment()
   let line = getline('.')
   bd!
-  let fragment = matchstr(line, '\v#+ \zs.*\ze')
+  if line =~# '^#'
+    let fragment = matchstr(line, '\v#+ \zs.*\ze')
+  else
+    let fragment = matchstr(line, '\v\[.*\]\(#\zs.*\ze\)')
+  endif
   call s:append_to_tail(line('.'), printf('[%s](%s#%s)', fragment, s:wiki_ref_link, fragment))
 endfun
 
@@ -598,12 +602,12 @@ fun! s:choose_ref_file()
   if !filereadable(md_abspath)
     return
   endif
-  let fragments = system('grep -E "#+ .*" ' .. md_abspath)
+  let fragments = system('grep -E -o "(#+ .*|\[.*\]\(#.*\))" ' .. md_abspath)
   let hint = substitute(substitute(fnamemodify(link, ':t'), '.md$', '', ''), '_', ' ', 'g')
   if !empty(fragments)
     let choice = input(printf('Do you want to refer to a fragment in %s ? (y/n): ', hint))
-    echo ""
     if tolower(choice) == 'y'
+      messages clear
       botright new wiki\ reference
       call setline(1, split(fragments, '\n'))
       setlocal readonly
