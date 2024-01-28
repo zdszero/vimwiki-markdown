@@ -607,7 +607,8 @@ fun! s:choose_ref_file()
   if !empty(fragments)
     let choice = input(printf('Do you want to refer to a fragment in %s ? (y/n): ', hint))
     if tolower(choice) == 'y'
-      messages clear
+      echon "\r\r"
+      echon ""
       botright new wiki\ reference
       call setline(1, split(fragments, '\n'))
       setlocal readonly
