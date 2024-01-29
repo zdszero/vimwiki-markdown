@@ -17,6 +17,10 @@ if !exists('g:wiki_preview_port')
   let g:wiki_preview_port = 8022
 endif
 
+if !exists('g:wiki_auto_convert')
+  let g:wiki_auto_convert = 1
+endif
+
 fun! s:wiki_call(func_call)
   let wiki_md_dir = expand(g:wiki_config['home'] .. '/' .. g:wiki_config['markdown_dir'])
   let cur_path = expand('%:p')
@@ -24,6 +28,13 @@ fun! s:wiki_call(func_call)
     exe 'call ' .. a:func_call
   endif
 endfun
+
+if g:wiki_auto_convert == 1
+  aug WikiMarkdown
+    au!
+    au BufWritePost *.md sil! call <SID>wiki_call("wiki#api#wiki2html(v:false)")
+  aug END
+endif
 
 nnoremap <silent><script> <Plug>(WikiHome)
       \ :<c-u>call wiki#api#open_home()<CR>
