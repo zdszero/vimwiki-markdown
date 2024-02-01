@@ -145,7 +145,6 @@ fun! wiki#api#create_follow_link()
     endif
     let md_link = printf('[%s](./%s)', line, goto_file)
     call setline(line('.'), md_link)
-    w
   endif
 endfun
 
@@ -590,7 +589,7 @@ fun! s:choose_ref_fragment()
   if line =~# '^#'
     let fragment = matchstr(line, '\v#+ \zs.*\ze')
   else
-    let fragment = matchstr(line, '\v\[.*\]\(#\zs.*\ze\)')
+    let fragment = matchstr(line, '<span id="\zs.*\ze">.*</span>')
   endif
   call s:append_to_tail(line('.'), printf('[%s](%s#%s)', fragment, s:wiki_ref_link, fragment))
 endfun
@@ -602,7 +601,7 @@ fun! s:choose_ref_file()
   if !filereadable(md_abspath)
     return
   endif
-  let fragments = system('grep -E -o "(#+ .*|\[.*\]\(#.*\))" ' .. md_abspath)
+  let fragments = system('grep -E -o "(#+ .*|<span id=\".*\">.*</span>)" '  .. md_abspath) 
   let hint = substitute(substitute(fnamemodify(link, ':t'), '.md$', '', ''), '_', ' ', 'g')
   if !empty(fragments)
     let choice = input(printf('Do you want to refer to a fragment in %s ? (y/n): ', hint))
