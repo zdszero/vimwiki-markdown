@@ -236,6 +236,35 @@ fun! s:change_all_image_links(dir, filepath)
   silent! exe cmd
 endfun
 
+let s:before_abspath = ''
+
+fun! s:choose_move_dir()
+  if s:before_abspath == ''
+    return
+  endif
+  let before_root_path = s:relative_path_to(s:markdown_dir_path, s:before_abspath)
+  let filename = fnamemodify(s:before_abspath, ':t')
+  let after_root_path = getline('.')..'/'..filename
+  call rename(s:markdown_path(before_root_path), s:markdown_path(after_root_path))
+  call rename(s:html_path(s:suffix_md2html(before_root_path)), s:html_path(s:suffix_md2html(after_root_path)))
+  bd!
+endfun
+
+fun! wiki#api#move_link()
+  let line = getline('.')
+  let dirs = extend(['/'], map(filter(split(globpath('~/Wiki/sources', '**'), '\n'), "isdirectory(v:val) == v:true"), "substitute(v:val, s:markdown_dir_path, '', '')"))
+  let path = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
+  if !empty(path)
+    let s:before_abspath = s:get_abs_path(path)
+    normal! dd
+    botright new wiki_move
+    call setline(1, dirs)
+    setlocal readonly
+    nmap <silent> <buffer> <cr> :<C-u>call <SID>choose_move_dir()<CR>
+    echo "choose a directory to move to (using Enter key)"
+  endif
+endfun
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "     delete all images in markdown file according to its absolute path      "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -608,7 +637,7 @@ fun! s:choose_ref_file()
     if tolower(choice) == 'y'
       echon "\r\r"
       echon ""
-      botright new wiki\ reference
+      botright new wiki_reference
       call setline(1, split(fragments, '\n'))
       setlocal readonly
       let s:wiki_ref_link = link
@@ -622,8 +651,7 @@ endfun
 
 fun! wiki#api#add_reference()
   let mds = map(split(globpath(s:markdown_dir_path, '**/*.md'), '\n'), "substitute(v:val, s:markdown_dir_path, '', '')")
-  botright new wiki\ reference
-  setlocal ft=wiki-reference
+  botright new wiki_reference
   call setline(1, mds)
   setlocal readonly
   nmap <silent> <buffer> <cr> :<C-u>call <SID>choose_ref_file()<CR>
