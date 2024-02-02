@@ -578,7 +578,7 @@ endfun
 
 fun! wiki#api#clean()
   let md_files =  split(globpath(s:markdown_dir_path, '**/*.md'), '\n')
-  let html_files =  split(globpath(s:html_dir_path, '**/*.html'), '\n')
+  let html_files =  filter(split(globpath(s:html_dir_path, '**/*.html'), '\n'), "v:val !~# 'WikiTheme'")
   let stem_dict = {}
   let changed_stems = []
   let redundants = []
@@ -604,10 +604,9 @@ fun! wiki#api#clean()
   endfor
 endfun
 
-fun! s:append_to_tail(lnum, content)
-  let original = getline(a:lnum)
-  let later = original .. a:content
-  call setline(a:lnum, later)
+fun! s:insert_text_at_cursor(content)
+  let line = getline('.')
+  call setline('.', strpart(line, 0, col('.') - 1) . a:content . strpart(line, col('.') - 1))
 endfun
 
 let s:wiki_ref_link = ''
@@ -620,7 +619,7 @@ fun! s:choose_ref_fragment()
   else
     let fragment = matchstr(line, '<span id="\zs.*\ze">.*</span>')
   endif
-  call s:append_to_tail(line('.'), printf('[%s](%s#%s)', fragment, s:wiki_ref_link, fragment))
+  call s:insert_text_at_cursor(printf('[%s](%s#%s)', fragment, s:wiki_ref_link, fragment))
 endfun
 
 fun! s:choose_ref_file()
@@ -646,7 +645,7 @@ fun! s:choose_ref_file()
       return
     endif
   endif
-  call s:append_to_tail(line('.'), printf('[%s](%s)', hint, link))
+  call s:insert_text_at_cursor(printf('[%s](%s)', hint, link))
 endfun
 
 fun! wiki#api#add_reference()
