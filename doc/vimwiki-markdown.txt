@@ -16,11 +16,11 @@ Specify the path of vimwiki-markdown and template usd by pandoc.
 Default value:
 >
     let g:wiki_config = {
-      \ 'home': '~/wiki',
+      \ 'home': '~/Wiki',
       \ 'markdown_dir': 'sources',
       \ 'html_dir': 'docs',
-      \ 'template_path': 'templates/github.html'
-      }
+      \ 'theme': 'bootstrap',
+      \}
 
 The meaning of the options in `g:wiki_config`:
 
@@ -42,6 +42,14 @@ Specify the browser to open converted html
                                                           *g:wiki_generate_toc*
 
 Wheather to generate table of content in html file, default value is 1
+
+
+                                                          *g:wiki_auto_convert*
+
+Wheather to convert markdown to html automatically when you save some markdown
+file.
+>
+    let g:wiki_auto_convert = 1
 
 ==============================================================================
 MAPPINPS                                             *vimwiki-markdown-mappings*
