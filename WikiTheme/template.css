@@ -93,6 +93,7 @@ input[type="submit"],
 input[type="radio"],
 input[type="checkbox"] {
   cursor: pointer;
+  margin: 3px 3px 3px 3px;
 }
 input[type="search"] {
   -webkit-box-sizing: content-box;
@@ -704,7 +705,8 @@ table {
 }
 .table {
   width: 100%;
-  margin-bottom: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 .table th,
 .table td {
