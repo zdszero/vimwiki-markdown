@@ -232,7 +232,16 @@ fun! s:change_all_image_links(dir, filepath)
     let sub = 'docs'
     let pat = repeat('\.\.\/', cnt) .. 'docs'
   endif
-  let cmd = printf("!sed -i 's/%s/%s/' %s", sub, pat, a:filepath)
+  let sed_command = "sed"
+  let os_name = system("uname -s")
+  if os_name == 'Darwin'
+    let sed_command = "gsed"
+  elseif os_name == "Linux"
+    let sed_command = "sed"
+  else
+    echomsg "Unsupported platform: " .. os_name
+  endif
+  let cmd = printf("!%s -i 's/%s/%s/' %s", sed_command, sub, pat, a:filepath)
   silent! exe cmd
 endfun
 

@@ -2,6 +2,17 @@
 
 # reference: https://gist.github.com/maikeldotuk/54a91c21ed9623705fdce7bab2989742
 
+SED_COMMAND=sed
+os_name=$(uname -s)
+
+if [[ "$os_name" = "Linux" ]]; then
+    SED_COMMAND=sed
+elif [[ "$os_name" = "Darwin" ]]; then
+    SED_COMMAND=gsed
+else
+    echo "Unknown operating system: $os_name"
+fi
+
 INPUT=$1
 OUTPUT=$2
 TEMPLATE=$3
@@ -37,13 +48,13 @@ else
     highlight=""
 fi
 
-sed -r 's/(\[.+\])\((.+)\.md(.*)\)/\1(\2.html\3)/g' < $INPUT |
+$SED_COMMAND -r 's/(\[.+\])\((.+)\.md(.*)\)/\1(\2.html\3)/g' < $INPUT |
     pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
-    sed -r "/<body>/,/<\/body>/ {
+    $SED_COMMAND -r "/<body>/,/<\/body>/ {
         s/\.\.\/docs/\./g
         s/(href=\")(\/)/\1${escaped_relative_to_root}/g
     }" > $OUTPUT
 
 if [ $DEPTH -gt 0 ]; then
-    sed -ri "/<head>/,/<\/head>/ s/((src|href)=\")(\.\/)/\1${escaped_relative_to_root}/g" $OUTPUT
+    $SED_COMMAND -ri "/<head>/,/<\/head>/ s/((src|href)=\")(\.\/)/\1${escaped_relative_to_root}/g" $OUTPUT
 fi
