@@ -388,6 +388,7 @@ endfun
 
 fun! s:open_html_in_browser(html_path)
   if exists('g:wiki_preview_browser')
+    echomsg '!'..g:wiki_preview_browser..' '..a:html_path
     exe '!'..g:wiki_preview_browser..' '..a:html_path
   else
     let browsers = ['firefox', 'google-chrome', 'chromium', 'brave', 'safari']
@@ -415,7 +416,7 @@ fun! wiki#api#open_html()
   let md_rel = substitute(expand('%:p'), s:markdown_dir_path, '', '')
   let html_rel = s:suffix_md2html(md_rel)
   let html_path = join([s:get_home(), g:wiki_config['html_dir'], html_rel], '/')
-  let open_path = '127.0.0.1:' .. g:wiki_preview_port .. html_rel
+  let open_path = 'http://127.0.0.1:' .. g:wiki_preview_port .. html_rel
   if !filereadable(html_path)
     echomsg 'html has not been coverted for this markdown file'
     return
