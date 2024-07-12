@@ -14,7 +14,7 @@ let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
-let s:http_jobid = -1
+let s:http_server_opened = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "                 get html absolute path using relative path                 "
@@ -384,14 +384,21 @@ fun! wiki#api#open_home()
   endif
 endfun
 
+function! s:JobHandler(channel, msg)
+  if a:msg !=# ''
+    echomsg 'http.server output: ' . a:msg
+  endif
+endfunction
+
 fun! wiki#api#run_http_server()
-  if s:http_jobid == -1
+  if s:http_server_opened == 0
     if has("nvim")
-      let s:http_jobid = jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+      call jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
     else
-      let s:http_jobid = job_start(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
+      call job_start(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port],  {'callback': 's:JobHandler'})
     endif
     echomsg "http server is running on port " .. g:wiki_preview_port
+    let s:http_server_opened = 1
   endif
 endfun
 
@@ -495,7 +502,7 @@ fun! s:md2html(stem)
     call system(printf("cp %s %s", src_theme, target_theme))
     echomsg "Theme " .. theme .. " has been updated"
   endif
-  call system([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth])
+  call system(join([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth], ' '))
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif
