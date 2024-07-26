@@ -60,6 +60,25 @@ fun! s:relative_path_to(parent, child)
   return relpath
 endfun
 
+fun! s:simplify_path(path)
+  " Split the path by '/'
+  let parts = split(a:path, '/')
+  let stack = []
+
+  for part in parts
+    if part == '..'
+      if !empty(stack)
+        call remove(stack, -1)
+      endif
+    elseif part != '.' && part != ''
+      call add(stack, part)
+    endif
+  endfor
+
+  " Join the stack to form the simplified path
+  return join(stack, '/')
+endfun
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "     convert a markdown or directory absolute path from sources to docs     "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -110,7 +129,7 @@ fun! s:edit_link(line)
   endif
   let file_dir = fnamemodify(abs_filepath, ':h')
   if !isdirectory(file_dir)
-    let choice = input(printf('Create directory %s ? (y/n): ', file_dir))
+    let choice = input(printf('Create directory: %s ? (y/n): ', s:simplify_path(file_dir)))
     if empty(choice) || tolower(choice) == 'y'
       call mkdir(file_dir, 'p')
     else
