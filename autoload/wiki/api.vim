@@ -201,8 +201,14 @@ fun! s:try_rename(from, to)
 endfun
 
 fun! s:try_delete(path)
-  call delete(path)
-  echomsg path.' has been deleted'
+  if executable('git')
+    call system('git rm '..a:path)
+    if !v:shell_error
+      return
+    endif
+  endif
+  call delete(a:path)
+  echomsg a:path.' has been deleted'
 endfun
 
 fun! s:rename_directory(abspath, newname)
