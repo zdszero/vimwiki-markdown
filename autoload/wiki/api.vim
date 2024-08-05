@@ -183,13 +183,26 @@ fun! wiki#api#create_follow_directory()
 endfun
 
 fun! s:try_rename(from, to)
-  if !filereadable(a:from)
-    return
+  let src = s:simplify_path(a:from)
+  let dst = s:simplify_path(a:to)
+  if executable('git')
+    let git_mv_cmd = printf("git mv -k %s %s", shellescape(src), shellescape(dst))
+    call system(git_mv_cmd)
+    if v:shell_error
+      echomsg 'Failed to rename ' . src
+    else
+      return
+    endif
   endif
-  let res = rename(a:from, a:to)
+  let res = rename(src, dst)
   if res != 0
-    echoerr 'fail to rename '..a:from..' to '..a:to
+    echoerr 'fail to rename '..src..' to '..dst
   endif
+endfun
+
+fun! s:try_delete(path)
+  call delete(path)
+  echomsg path.' has been deleted'
 endfun
 
 fun! s:rename_directory(abspath, newname)
@@ -231,8 +244,8 @@ fun! wiki#api#rename_link() abort
         let new_md = fnamemodify(md, ':h').."/"..new_name
         let md_abs = s:get_abs_path(md)
         let new_md_abs = s:get_abs_path(new_md)
-        call s:try_rename(md_abs, new_md_abs)
         call s:try_rename(s:abs_sources2docs(md_abs), s:abs_sources2docs(new_md_abs))
+        call s:try_rename(md_abs, new_md_abs)
         let new_line = substitute(line, '\[.*\](.*)', '['..hint..']'..'('..new_md..')', '')
         call setline(line('.'), new_line)
       endif
@@ -273,8 +286,8 @@ fun! s:choose_move_dir()
   let before_root_path = s:relative_path_to(s:markdown_dir_path, s:before_abspath)
   let filename = fnamemodify(s:before_abspath, ':t')
   let after_root_path = getline('.')..'/'..filename
-  call rename(s:markdown_path(before_root_path), s:markdown_path(after_root_path))
-  call rename(s:html_path(s:suffix_md2html(before_root_path)), s:html_path(s:suffix_md2html(after_root_path)))
+  call s:try_rename(s:markdown_path(before_root_path), s:markdown_path(after_root_path))
+  call s:try_rename(s:html_path(s:suffix_md2html(before_root_path)), s:html_path(s:suffix_md2html(after_root_path)))
   bd!
 endfun
 
@@ -303,8 +316,7 @@ fun! s:delete_images_in_markdown(md_abspath)
     if filereadable(abspath)
       let name = fnamemodify(relpath, ':t')
       if name =~# '\v\.(png|jpg|jpeg|bmp|svg|gif|webp)$'
-        call delete(abspath)
-        echomsg name..' has been deleted'
+        call s:try_delete(abspath)
       endif
     endif
   endfor
@@ -318,8 +330,8 @@ fun! s:delete_markdown(md_abspath)
   let html_name = s:suffix_md2html(name)
   let html_abspath = s:abs_sources2docs(a:md_abspath)
   call s:delete_images_in_markdown(a:md_abspath)
-  call delete(a:md_abspath)
-  call delete(html_abspath)
+  call s:try_delete(a:md_abspath)
+  call s:try_delete(html_abspath)
   echomsg name..' and '..html_name..' have been deleted'
 endfun
 
@@ -359,9 +371,8 @@ fun! wiki#api#delete_link()
     elseif name =~# '\v\.(png|jpg|jpeg|bmp|svg|gif|webp)$'
       let opt = confirm('Are you sure you want to delete this picture?', "&Yes\n&No")
       if opt == 1
-        call delete(md)
+        call s:try_delete(md)
       endif
-      echomsg name..' has been deleted'
     endif
     normal! dd
   endif
@@ -635,8 +646,7 @@ fun! wiki#api#clean()
     return
   endif
   for html in redundants
-    call delete(html)
-    echo 'remove ' .. html
+    call s:try_delete(html)
   endfor
 endfun
 
