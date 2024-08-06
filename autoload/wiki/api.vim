@@ -183,20 +183,21 @@ fun! wiki#api#create_follow_directory()
 endfun
 
 fun! s:try_rename(from, to)
-  let src = s:simplify_path(a:from)
-  let dst = s:simplify_path(a:to)
   if executable('git')
-    let git_mv_cmd = printf("git mv -k %s %s", shellescape(src), shellescape(dst))
+    let git_mv_cmd = printf("git mv -k %s %s", a:from, a:to)
     call system(git_mv_cmd)
     if v:shell_error
-      echomsg 'Failed to rename ' . src
+      echomsg 'Failed to rename ' . a:from
     else
+      echomsg git_mv_cmd
       return
     endif
   endif
-  let res = rename(src, dst)
+  let res = rename(a:from, a:to)
   if res != 0
-    echoerr 'fail to rename '..src..' to '..dst
+    echoerr 'Fail to rename '..a:from..' to '..dst
+  else
+    echomsg 'mv '..a:from..' to '..dst
   endif
 endfun
 
