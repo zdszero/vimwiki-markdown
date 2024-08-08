@@ -184,20 +184,19 @@ endfun
 
 fun! s:try_rename(from, to)
   if executable('git')
-    let git_mv_cmd = printf("git mv -k %s %s", a:from, a:to)
-    call system(git_mv_cmd)
-    if v:shell_error
-      echomsg 'Failed to rename ' . a:from
+    if isdirectory(a:from)
+      let git_mv_cmd = printf("git mv -k %s %s", a:from, a:to)
     else
-      echomsg git_mv_cmd
+      let git_mv_cmd = printf("git mv %s %s", a:from, a:to)
+    endif
+    call system(git_mv_cmd)
+    if !v:shell_error
       return
     endif
   endif
   let res = rename(a:from, a:to)
   if res != 0
-    echoerr 'Fail to rename '..a:from..' to '..dst
-  else
-    echomsg 'mv '..a:from..' to '..dst
+    echoerr 'Fail to rename '..a:from..' to '..a:to
   endif
 endfun
 
