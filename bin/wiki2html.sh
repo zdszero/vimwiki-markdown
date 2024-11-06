@@ -21,7 +21,7 @@ TOC=$5
 HIGHLIGHT=$6
 DEPTH=$7
 
-math="--mathjax=https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+math="--mathjax=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
 
 relative_to_root=""
 escaped_relative_to_root=""
