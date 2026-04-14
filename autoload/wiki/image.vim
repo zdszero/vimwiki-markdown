@@ -186,7 +186,6 @@ fun! wiki#image#markdown_clipboard_image()
       let extension = 'png'
     endif
     let relpath = g:mdip_imgdir_intext . '/' . g:mdip_tmpname . '.' . extension
-    echomsg "setline ...."
     call setline('.', printf("![%s](%s)", g:mdip_tmpname, relpath))
   endif
 endfun
