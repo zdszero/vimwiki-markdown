@@ -49,7 +49,7 @@ else
 fi
 
 $SED_COMMAND -r 's/(\[.+\])\((.+)\.md(.*)\)/\1(\2.html\3)/g' < $INPUT |
-    pandoc $math $css --template=$TEMPLATE -f markdown -t html $toc $highlight |
+    pandoc $math $css --template=$TEMPLATE -f markdown+tex_math_single_backslash -t html $toc $highlight |
     $SED_COMMAND -r "/<body>/,/<\/body>/ {
         s/\.\.\/docs/\./g
         s/(href=\")(\/)/\1${escaped_relative_to_root}/g
