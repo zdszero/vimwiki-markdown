@@ -14,7 +14,7 @@ let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
-let s:sidebar_file = s:html_dir_path .. '/.wiki_sidebar.html'
+let s:sidebar_file = s:html_dir_path .. '/wiki_sidebar.html'
 let s:http_server_opened = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -679,7 +679,7 @@ endfun
 
 fun! wiki#api#clean()
   let md_files =  split(globpath(s:markdown_dir_path, '**/*.md'), '\n')
-  let html_files =  filter(split(globpath(s:html_dir_path, '**/*.html'), '\n'), "v:val !~# 'WikiTheme'")
+  let html_files =  filter(split(globpath(s:html_dir_path, '**/*.html'), '\n'), "v:val !~# 'WikiTheme' && v:val !~# 'wiki_sidebar\\.html$'")
   let stem_dict = {}
   let changed_stems = []
   let redundants = []
