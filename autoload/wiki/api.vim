@@ -14,6 +14,7 @@ let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
+let s:sidebar_file = s:html_dir_path .. '/.wiki_sidebar.html'
 let s:http_server_opened = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -500,6 +501,50 @@ fun! s:parse_metadata(mdpath)
   return opts
 endfun
 
+fun! s:sed_command()
+  let os_name = system('uname -s')
+  if os_name =~# 'Darwin'
+    return 'gsed'
+  else
+    return 'sed'
+  endif
+endfun
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" generate the whole-site directory (left sidebar) from index.md, which is   "
+" the master nested table of contents linking to every page. Links are       "
+" rewritten to root-absolute html paths so wiki2html.sh's depth-based rewrite "
+" turns them into correct relative links on every page.                      "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:generate_sidebar()
+  let index_md = s:markdown_path('index.md')
+  if !filereadable(index_md)
+    if filereadable(s:sidebar_file)
+      call delete(s:sidebar_file)
+    endif
+    return
+  endif
+  if !isdirectory(s:html_dir_path)
+    call mkdir(s:html_dir_path, 'p')
+  endif
+  let sed = s:sed_command()
+  let cmd = printf("pandoc -f markdown -t html %s | %s -r 's#href=\"\\./#href=\"/#g; s#\\.md\"#.html\"#g'",
+        \ shellescape(index_md), sed)
+  let fragment = system(cmd)
+  if v:shell_error
+    return
+  endif
+  let title = 'Home'
+  for line in readfile(index_md, '', 3)
+    if line =~# '^%\s'
+      let title = matchstr(line, '^%\s*\zs.*')
+      break
+    endif
+  endfor
+  let home = printf('<a class="wiki-home" href="/index.html">%s</a>', title)
+  call writefile(split(home .. "\n" .. fragment, "\n", 1), s:sidebar_file)
+endfun
+
 fun! s:md2html(stem)
   let depth = count(a:stem, '/')
   let html = s:join_path(s:html_dir_path, a:stem..'.html')
@@ -538,7 +583,7 @@ fun! s:md2html(stem)
     call system(printf("cp %s %s", src_theme, target_theme))
     echomsg "Theme " .. theme .. " has been updated"
   endif
-  call system(join([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth], ' '))
+  call system(join([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth, s:sidebar_file], ' '))
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif
@@ -567,12 +612,14 @@ fun! s:changed_sources()
 endfun
 
 fun! s:convert_changed()
+  call s:generate_sidebar()
   for stem in s:changed_sources()
     call s:md2html(stem)
   endfor
 endfun
 
 fun! s:convert_all()
+  call s:generate_sidebar()
   let md_files =  split(globpath(s:markdown_dir_path, '**/*.md'), '\n')
   for md in md_files
     let suffix = substitute(md, s:markdown_dir_path .. '/', '', '')
@@ -591,6 +638,7 @@ fun! s:convert_current()
     echoerr &ft .. ' cannot be converted to html'
     return
   endif
+  call s:generate_sidebar()
   let suffix = substitute(md, s:markdown_dir_path .. '/', '', '')
   let stem = substitute(suffix, '.md', '', '')
   let html = s:join_path(s:html_dir_path, stem..'.html')
