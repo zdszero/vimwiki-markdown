@@ -65,6 +65,7 @@
       border-right: 1px solid #eee;
       font-size: 14px;
     }
+    .wiki-sidebar[hidden] { display: none; }
     .wiki-toc {
       flex: 0 0 220px;
       width: 220px;
@@ -144,11 +145,7 @@
   </div>
   $endif$
   <div class="wiki-layout">
-    $if(sidebar)$
-    <nav class="wiki-sidebar">
-      $sidebar$
-    </nav>
-    $endif$
+    <nav class="wiki-sidebar" id="wiki-sidebar" hidden></nav>
     <main class="wiki-main">
       $for(include-before)$
       $include-before$
@@ -166,13 +163,29 @@
   </div>
   <script type="text/javascript">
     (function () {
-      // highlight the current page in the site directory
-      var here = location.href.split('#')[0];
-      var links = document.querySelectorAll('.wiki-sidebar a');
-      for (var i = 0; i < links.length; i++) {
-        if (links[i].href.split('#')[0] === here) {
-          links[i].classList.add('active');
+      function markActive() {
+        var here = location.href.split('#')[0];
+        var links = document.querySelectorAll('.wiki-sidebar a');
+        for (var i = 0; i < links.length; i++) {
+          if (links[i].href.split('#')[0] === here) {
+            links[i].classList.add('active');
+          }
         }
+      }
+      // load the shared site directory once (served from the wiki root);
+      // kept in a standalone file so adding a page needn't rebuild every page.
+      var nav = document.getElementById('wiki-sidebar');
+      if (nav) {
+        fetch('/.wiki_sidebar.html')
+          .then(function (r) { return r.ok ? r.text() : ''; })
+          .then(function (html) {
+            if (html) {
+              nav.innerHTML = html;
+              nav.hidden = false;
+              markActive();
+            }
+          })
+          .catch(function () {});
       }
       // keep bootstrap table styling (previously done by sticky_menu.js)
       var tables = document.getElementsByTagName('table');

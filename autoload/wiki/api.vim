@@ -583,7 +583,7 @@ fun! s:md2html(stem)
     call system(printf("cp %s %s", src_theme, target_theme))
     echomsg "Theme " .. theme .. " has been updated"
   endif
-  call system(join([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth, s:sidebar_file], ' '))
+  call system(join([s:script_path, md, html, s:template_path, theme, enable_toc, enable_highlight, depth], ' '))
   if !v:shell_error
     echomsg md..' has been converted to html'
   endif

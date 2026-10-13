@@ -20,14 +20,8 @@ CSS_THEME=$4
 TOC=$5
 HIGHLIGHT=$6
 DEPTH=$7
-SIDEBAR=$8
 
 math="--mathjax=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-
-sidebar_opt=()
-if [ -n "$SIDEBAR" ] && [ -s "$SIDEBAR" ]; then
-    sidebar_opt=(-V "sidebar=$(cat "$SIDEBAR")")
-fi
 
 relative_to_root=""
 escaped_relative_to_root=""
@@ -55,7 +49,7 @@ else
 fi
 
 $SED_COMMAND -r 's/(\[.+\])\((.+)\.md(.*)\)/\1(\2.html\3)/g' < $INPUT |
-    pandoc $math $css --template=$TEMPLATE "${sidebar_opt[@]}" -f markdown+tex_math_single_backslash -t html $toc $highlight |
+    pandoc $math $css --template=$TEMPLATE -f markdown+tex_math_single_backslash -t html $toc $highlight |
     $SED_COMMAND -r "/<body>/,/<\/body>/ {
         s/\.\.\/docs/\./g
         s/(href=\")(\/)/\1${escaped_relative_to_root}/g
