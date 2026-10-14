@@ -75,3 +75,4 @@ command! -bang WikiAll2HTML        call <SID>wiki_call("wiki#api#wiki_all2html(<
 command! WikiClean                 call <SID>wiki_call("wiki#api#clean()")
 command! WikiServer                call <SID>wiki_call("wiki#api#run_http_server()")
 command! WikiReference             call <SID>wiki_call("wiki#api#add_reference()")
+command! WikiSyncTheme             call wiki#api#sync_theme()

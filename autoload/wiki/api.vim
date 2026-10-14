@@ -756,3 +756,26 @@ fun! wiki#api#add_reference()
   nmap <silent> <buffer> <cr> :<C-u>call <SID>choose_ref_file()<CR>
   echo "choose a markdown file to refer to (using Enter key)"
 endfun
+
+" copy the plugin's bundled WikiTheme (template.css, menu assets, theme/*.css)
+" into the wiki's html dir, overwriting the stale copy made at wiki init.
+fun! wiki#api#sync_theme()
+  let src = g:markdown_wiki_plug_dir .. '/WikiTheme'
+  if !isdirectory(src)
+    echoerr 'WikiTheme not found in plugin: ' .. src
+    return
+  endif
+  if !isdirectory(s:html_dir_path)
+    call mkdir(s:html_dir_path, 'p')
+  endif
+  " copy the contents of WikiTheme into <html_dir>/WikiTheme (trailing /.
+  " merges into the existing dir, leaving sibling dirs like WikiImage alone).
+  let dest = s:join_path(s:html_dir_path, 'WikiTheme')
+  call mkdir(dest, 'p')
+  call system(['cp', '-R', src .. '/.', dest])
+  if v:shell_error
+    echoerr 'Failed to sync theme to ' .. dest
+    return
+  endif
+  echomsg 'WikiTheme synced to ' .. dest
+endfun
