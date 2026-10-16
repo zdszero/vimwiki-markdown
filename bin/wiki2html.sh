@@ -21,7 +21,7 @@ TOC=$5
 HIGHLIGHT=$6
 DEPTH=$7
 
-math="--mathjax=https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+math="--katex=https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/"
 
 relative_to_root=""
 escaped_relative_to_root=""
