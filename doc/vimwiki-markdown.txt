@@ -49,6 +49,16 @@ server's hostname or ip when previewing on a remote machine.
     let g:wiki_preview_host = '10.0.0.8'
 <
 
+                                                          *g:wiki_preview_bind*
+
+Address the preview http server listens on, default value is '' which means
+all interfaces. Set it to '127.0.0.1' when you reach the server through ssh
+port forwarding (`ssh -L 8022:127.0.0.1:8022 host`) and do not want to expose
+the html directory on the network.
+>
+    let g:wiki_preview_bind = '127.0.0.1'
+<
+
                                                           *g:wiki_generate_toc*
 
 Wheather to generate table of content in html file, default value is 1

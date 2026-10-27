@@ -21,22 +21,44 @@ if !exists('g:wiki_preview_host')
   let g:wiki_preview_host = '127.0.0.1'
 endif
 
+" address the http server listens on, empty means all interfaces
+if !exists('g:wiki_preview_bind')
+  let g:wiki_preview_bind = ''
+endif
+
 if !exists('g:wiki_auto_convert')
   let g:wiki_auto_convert = 1
 endif
 
 fun! s:wiki_call(func_call)
-  let wiki_md_dir = expand(g:wiki_config['home'] .. '/' .. g:wiki_config['markdown_dir'])
-  let cur_path = expand('%:p')
-  if cur_path =~# '^'..wiki_md_dir
+  if wiki#api#is_under(expand('%:p'), wiki#api#get_path('markdown_dir'))
     exe 'call ' .. a:func_call
   endif
+endfun
+
+let s:pandoc_warned = 0
+
+fun! s:auto_convert()
+  if !wiki#api#is_under(expand('%:p'), wiki#api#get_path('markdown_dir'))
+    return
+  endif
+  " the conversion below is silent, so warn once about missing pandoc
+  if !executable('pandoc')
+    if !s:pandoc_warned
+      let s:pandoc_warned = 1
+      echohl WarningMsg
+      echomsg 'vimwiki-markdown: pandoc not found, html is not generated'
+      echohl None
+    endif
+    return
+  endif
+  sil! call wiki#api#wiki2html(v:false)
 endfun
 
 if g:wiki_auto_convert == 1
   aug WikiMarkdown
     au!
-    au BufWritePost *.md sil! call <SID>wiki_call("wiki#api#wiki2html(v:false)")
+    au BufWritePost *.md call <SID>auto_convert()
   aug END
 endif
 

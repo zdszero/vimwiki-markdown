@@ -1,9 +1,26 @@
+" expand ~, collapse duplicate slashes and strip trailing slash
+fun! wiki#api#normalize_path(path)
+  let path = simplify(expand(a:path))
+  return path ==# '/' ? path : substitute(path, '/\+$', '', '')
+endfun
+
+" check whether path is dir itself or located under dir
+fun! wiki#api#is_under(path, dir)
+  let path = wiki#api#normalize_path(a:path)
+  let dir = wiki#api#normalize_path(a:dir)
+  return path ==# dir || stridx(path, dir ==# '/' ? dir : dir .. '/') == 0
+endfun
+
+fun! wiki#api#get_path(key)
+  return wiki#api#normalize_path(g:wiki_config['home'] .. '/' .. g:wiki_config[a:key])
+endfun
+
 fun! s:get_path(key)
-  return expand(g:wiki_config['home'] .. '/' .. g:wiki_config[a:key])
+  return wiki#api#get_path(a:key)
 endfun
 
 fun! s:get_home()
-  return expand(g:wiki_config['home'])
+  return wiki#api#normalize_path(g:wiki_config['home'])
 endfun
 
 fun! s:join_path(...)
@@ -300,7 +317,7 @@ endfun
 
 fun! wiki#api#move_link()
   let line = getline('.')
-  let dirs = extend(['/'], map(filter(split(globpath('~/Wiki/sources', '**'), '\n'), "isdirectory(v:val) == v:true"), "substitute(v:val, s:markdown_dir_path, '', '')"))
+  let dirs = extend(['/'], map(filter(split(globpath(s:markdown_dir_path, '**'), '\n'), "isdirectory(v:val) == v:true"), "substitute(v:val, s:markdown_dir_path, '', '')"))
   let path = matchstr(line, '\v\[.*\]\(\zs.*\ze\)')
   if !empty(path)
     let s:before_abspath = s:get_abs_path(path)
@@ -427,20 +444,70 @@ function! s:JobHandler(channel, msg)
   endif
 endfunction
 
-fun! wiki#api#run_http_server()
-  if s:http_server_opened == 0
-    if has("nvim")
-      call jobstart(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port])
-    else
-      call job_start(['python3', '-m', 'http.server', '-d', s:html_dir_path, g:wiki_preview_port],  {'callback': 's:JobHandler'})
-    endif
-    echomsg "http server is running on port " .. g:wiki_preview_port
-    let s:http_server_opened = 1
+let s:http_server_stderr = []
+
+fun! s:on_server_stderr(job, data, event)
+  " http.server logs every request to stderr, keep only the recent lines
+  let lines = s:http_server_stderr + a:data
+  let s:http_server_stderr = lines[max([0, len(lines) - 10]) :]
+endfun
+
+fun! s:on_server_exit(job, code, ...)
+  let s:http_server_opened = 0
+  if a:code != 0
+    " the last line of a python traceback holds the reason, e.g. address in use
+    let errors = filter(copy(s:http_server_stderr), 'v:val !~# "^\\s*$"')
+    let msg = empty(errors) ? '' : trim(errors[-1])
+    echohl ErrorMsg
+    echomsg printf('http server exited with code %d: %s', a:code, msg)
+    echohl None
   endif
+  let s:http_server_stderr = []
+endfun
+
+fun! s:http_server_cmd()
+  let cmd = ['python3', '-m', 'http.server', '-d', s:html_dir_path]
+  if !empty(g:wiki_preview_bind)
+    let cmd += ['--bind', g:wiki_preview_bind]
+  endif
+  return cmd + [string(g:wiki_preview_port)]
+endfun
+
+fun! wiki#api#run_http_server()
+  if s:http_server_opened == 1
+    return 1
+  endif
+  if !executable('python3')
+    echoerr 'python3 is required to run the preview http server'
+    return 0
+  endif
+  if has("nvim")
+    let job = jobstart(s:http_server_cmd(), {
+          \ 'on_stderr': function('s:on_server_stderr'),
+          \ 'on_exit': function('s:on_server_exit'),
+          \ })
+    if job <= 0
+      echoerr 'failed to start http server'
+      return 0
+    endif
+  else
+    call job_start(s:http_server_cmd(), {
+          \ 'callback': 's:JobHandler',
+          \ 'exit_cb': function('s:on_server_exit'),
+          \ })
+  endif
+  let s:http_server_opened = 1
+  echomsg printf('http server is serving %s on %s:%d', s:html_dir_path,
+        \ empty(g:wiki_preview_bind) ? '0.0.0.0' : g:wiki_preview_bind, g:wiki_preview_port)
+  return 1
 endfun
 
 fun! s:open_html_in_browser(html_path)
   let browser = get(g:, 'wiki_preview_browser', '')
+  " ignore a configured browser that does not exist (e.g. on a remote server)
+  if !empty(browser) && !executable(split(browser)[0])
+    let browser = ''
+  endif
   if empty(browser)
     for candidate in ['firefox', 'google-chrome', 'chromium', 'brave', 'safari']
       if executable(candidate)
@@ -478,8 +545,9 @@ fun! wiki#api#open_html()
     echomsg 'html has not been coverted for this markdown file'
     return
   endif
-  call wiki#api#run_http_server()
-  call s:open_html_in_browser(open_path)
+  if wiki#api#run_http_server()
+    call s:open_html_in_browser(open_path)
+  endif
 endfun
 
 fun! s:parse_metadata(mdpath)
@@ -634,7 +702,7 @@ endfun
 
 fun! s:convert_current()
   let md = expand('%:p')
-  if md !~# '^'..s:markdown_dir_path
+  if !wiki#api#is_under(md, s:markdown_dir_path)
     echoerr 'the current file is not in wiki home directory and cannot be converted to html'
     return
   endif
