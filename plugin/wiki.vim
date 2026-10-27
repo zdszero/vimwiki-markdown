@@ -17,6 +17,10 @@ if !exists('g:wiki_preview_port')
   let g:wiki_preview_port = 8022
 endif
 
+if !exists('g:wiki_preview_host')
+  let g:wiki_preview_host = '127.0.0.1'
+endif
+
 if !exists('g:wiki_auto_convert')
   let g:wiki_auto_convert = 1
 endif

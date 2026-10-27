@@ -38,6 +38,16 @@ Specify the browser to open converted html
 >
     let g:wiki_preview_browser = 'google-chrome-stable'
 <
+If it is not set and no known browser is found (e.g. on a remote server),
+the http server is still started and the preview url is echoed instead.
+
+                                                          *g:wiki_preview_host*
+
+Host used in the preview url, default value is '127.0.0.1'. Set it to the
+server's hostname or ip when previewing on a remote machine.
+>
+    let g:wiki_preview_host = '10.0.0.8'
+<
 
                                                           *g:wiki_generate_toc*
 

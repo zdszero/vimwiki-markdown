@@ -440,18 +440,22 @@ fun! wiki#api#run_http_server()
 endfun
 
 fun! s:open_html_in_browser(html_path)
-  if exists('g:wiki_preview_browser')
-    echomsg '!'..g:wiki_preview_browser..' '..a:html_path
-    exe '!'..g:wiki_preview_browser..' '..a:html_path
-  else
-    let browsers = ['firefox', 'google-chrome', 'chromium', 'brave', 'safari']
-    for browser in browsers
-      if executable(browser)
-        exe '!'..browser..' '..a:html_path
+  let browser = get(g:, 'wiki_preview_browser', '')
+  if empty(browser)
+    for candidate in ['firefox', 'google-chrome', 'chromium', 'brave', 'safari']
+      if executable(candidate)
+        let browser = candidate
         break
       endif
     endfor
   endif
+  redraw
+  if empty(browser)
+    " no browser available (e.g. on a remote server), just show the url
+    echomsg 'Wiki preview: ' .. a:html_path
+    return
+  endif
+  exe '!'..browser..' '..a:html_path
   redraw
 endfun
 
@@ -469,7 +473,7 @@ fun! wiki#api#open_html()
   let md_rel = substitute(expand('%:p'), s:markdown_dir_path, '', '')
   let html_rel = s:suffix_md2html(md_rel)
   let html_path = join([s:get_home(), g:wiki_config['html_dir'], html_rel], '/')
-  let open_path = 'http://127.0.0.1:' .. g:wiki_preview_port .. html_rel
+  let open_path = 'http://' .. g:wiki_preview_host .. ':' .. g:wiki_preview_port .. html_rel
   if !filereadable(html_path)
     echomsg 'html has not been coverted for this markdown file'
     return
