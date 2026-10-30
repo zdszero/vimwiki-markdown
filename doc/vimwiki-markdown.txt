@@ -117,6 +117,31 @@ COMMNADS                                             *vimwiki-markdown-commands*
 *:WikiClean*                      Remove all redudant html files
 
 ==============================================================================
+SUB NOTEBOOKS                                   *vimwiki-markdown-notebooks*
+
+The left sidebar is generated from `index.md`. Split `index.md` with
+horizontal rules (`---`) to divide it into sub notebooks. Each notebook is
+named after its first heading, gets a tab at the top of the sidebar, and only
+the selected notebook's tree is shown. A page opens with the notebook that
+contains it; other pages keep the notebook picked last time.
+>
+    % ZWiki
+
+    # LLM
+
+    - [Roofline](./roofline.md)
+
+    ---
+
+    # Stock
+
+    - [2008](./2008.md)
+<
+Keep a blank line before and after `---`, otherwise pandoc renders the home
+page as a table. Run `:WikiSyncTheme` once after updating the plugin so the
+html dir gets the new sidebar script and styles.
+
+==============================================================================
 LICENSE                                         *hugo-license*
 
 MIT license.

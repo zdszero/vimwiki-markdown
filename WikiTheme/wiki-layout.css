@@ -63,6 +63,29 @@ mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: h
 .wiki-sidebar a { text-decoration: none; color: #555; }
 .wiki-sidebar a:hover { color: #0088cc; text-decoration: underline; }
 .wiki-sidebar a.active { color: #0088cc; font-weight: bold; }
+/* sub notebook tabs (index.md split by ---), one tree shown at a time */
+.wiki-notebook-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.wiki-notebook-tab {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #555;
+  background: #f7f7f7;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 1px 10px;
+  margin: 0;
+  cursor: pointer;
+}
+.wiki-notebook-tab:hover { color: #0088cc; }
+.wiki-notebook-tab.active { color: #fff; background: #0088cc; border-color: #0088cc; }
+.wiki-notebook[hidden] { display: none; }
+.wiki-notebook > ul { margin-left: 0; }
 /* page TOC */
 .wiki-toc ul { list-style: none; margin: 0 0 0 12px; padding: 0; }
 .wiki-toc > ul { margin-left: 0; }
@@ -107,8 +130,11 @@ mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: h
   /* collapsed state: show only the toggle button */
   .wiki-sidebar:not(.open) .wiki-home,
   .wiki-sidebar:not(.open) > ul,
+  .wiki-sidebar:not(.open) .wiki-notebook-tabs,
+  .wiki-sidebar:not(.open) .wiki-notebook,
   .wiki-toc:not(.open) > ul { display: none; }
   .wiki-sidebar.open > ul,
+  .wiki-sidebar.open .wiki-notebook-tabs,
   .wiki-toc.open > ul { margin-top: 8px; }
   /* the bundled bootstrap theme pins .container to a fixed 940px, which
      forces the whole page wider than a phone screen -> override it */

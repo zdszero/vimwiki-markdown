@@ -583,10 +583,71 @@ fun! s:sed_command()
 endfun
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" split index.md into sub notebooks at horizontal rules (---, ***, ___).     "
+" Each notebook is named after its first ATX heading, which is dropped from  "
+" its sidebar tree. Returns a list of {'name': ..., 'lines': [...]}.         "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:split_notebooks(index_md)
+  let lines = readfile(a:index_md)
+  let idx = 0
+  " skip the yaml metadata block and the pandoc title block
+  if !empty(lines) && lines[0] ==# '---'
+    let idx = 1
+    while idx < len(lines) && lines[idx] !~# '^\(---\|\.\.\.\)$'
+      let idx += 1
+    endwhile
+    let idx += 1
+  endif
+  while idx < len(lines) && lines[idx] =~# '^%'
+    let idx += 1
+  endwhile
+  let sections = [[]]
+  let in_fence = 0
+  for line in lines[idx:]
+    if line =~# '^\s*\(```\|\~\~\~\)'
+      let in_fence = !in_fence
+    endif
+    if !in_fence && line =~# '^ \{0,3}\(-\{3,}\|\*\{3,}\|_\{3,}\)\s*$'
+      call add(sections, [])
+    else
+      call add(sections[-1], line)
+    endif
+  endfor
+  let notebooks = []
+  for sec in sections
+    let name = ''
+    let hi = match(sec, '^#\{1,6}\s')
+    if hi >= 0
+      let name = substitute(sec[hi], '^#\+\s*', '', '')
+      let name = substitute(name, '\s*{[^}]*}\s*$', '', '')
+      let name = substitute(name, '\(\s\+#\+\)\?\s*$', '', '')
+      call remove(sec, hi)
+    endif
+    if match(sec, '\S') < 0
+      continue
+    endif
+    if empty(name)
+      let name = 'Notebook ' .. (len(notebooks) + 1)
+    endif
+    call add(notebooks, {'name': name, 'lines': sec})
+  endfor
+  return notebooks
+endfun
+
+fun! s:html_escape(text)
+  let text = substitute(a:text, '&', '\&amp;', 'g')
+  let text = substitute(text, '<', '\&lt;', 'g')
+  let text = substitute(text, '>', '\&gt;', 'g')
+  return substitute(text, '"', '\&quot;', 'g')
+endfun
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " generate the whole-site directory (left sidebar) from index.md, which is   "
 " the master nested table of contents linking to every page. Links are       "
 " rewritten to root-absolute html paths so wiki2html.sh's depth-based rewrite "
 " turns them into correct relative links on every page.                      "
+" If index.md is split into sub notebooks by horizontal rules, each notebook "
+" gets its own tree and a tab, and the page script shows one at a time.      "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 fun! s:generate_sidebar()
   let index_md = s:markdown_path('index.md')
@@ -600,11 +661,29 @@ fun! s:generate_sidebar()
     call mkdir(s:html_dir_path, 'p')
   endif
   let sed = s:sed_command()
-  let cmd = printf("pandoc -f markdown -t html %s | %s -r 's#href=\"\\./#href=\"/#g; s#\\.md\"#.html\"#g'",
-        \ shellescape(index_md), sed)
-  let fragment = system(cmd)
-  if v:shell_error
-    return
+  let cmd = printf("pandoc -f markdown -t html | %s -r 's#href=\"\\./#href=\"/#g; s#\\.md\"#.html\"#g'", sed)
+  let notebooks = s:split_notebooks(index_md)
+  if len(notebooks) < 2
+    let fragment = system(cmd, readfile(index_md))
+    if v:shell_error
+      return
+    endif
+  else
+    let tabs = ['<div class="wiki-notebook-tabs" role="tablist">']
+    let trees = []
+    for i in range(len(notebooks))
+      let tree = system(cmd, notebooks[i].lines)
+      if v:shell_error
+        return
+      endif
+      let name = s:html_escape(notebooks[i].name)
+      call add(tabs, printf('<button type="button" class="wiki-notebook-tab" role="tab" data-notebook="%d" data-name="%s">%s</button>', i, name, name))
+      call add(trees, printf('<div class="wiki-notebook" role="tabpanel" data-notebook="%d" data-name="%s">', i, name))
+      call add(trees, tree)
+      call add(trees, '</div>')
+    endfor
+    call add(tabs, '</div>')
+    let fragment = join(tabs + trees, "\n")
   endif
   let title = 'Home'
   for line in readfile(index_md, '', 3)
