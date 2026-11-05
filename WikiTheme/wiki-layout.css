@@ -48,6 +48,13 @@
 .wiki-main :not(pre) > code { white-space: normal; overflow-wrap: break-word; word-break: break-word; }
 mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 /* site directory tree */
+.wiki-sidebar .wiki-parent {
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 6px;
+  text-decoration: none;
+  color: #888;
+}
 .wiki-sidebar .wiki-home {
   display: block;
   font-weight: bold;
@@ -128,6 +135,7 @@ mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: h
   .wiki-collapse-btn::after { content: '\25be'; float: right; }
   .wiki-collapse-btn[aria-expanded="true"]::after { content: '\25b4'; }
   /* collapsed state: show only the toggle button */
+  .wiki-sidebar:not(.open) .wiki-parent,
   .wiki-sidebar:not(.open) .wiki-home,
   .wiki-sidebar:not(.open) > ul,
   .wiki-sidebar:not(.open) .wiki-notebook-tabs,

@@ -141,6 +141,12 @@ Keep a blank line before and after `---`, otherwise pandoc renders the home
 page as a table. Run `:WikiSyncTheme` once after updating the plugin so the
 html dir gets the new sidebar script and styles.
 
+Every directory holding an `index.md` gets its own sidebar built from that
+`index.md`, so e.g. pages under `dating/` show `dating/index.md` instead of the
+root one. A page uses the sidebar of the nearest directory up from it that has
+an `index.md`. A sub directory's sidebar starts with a link back to its parent
+index. Run `:WikiAll2HTML!` to rebuild every sidebar.
+
 ==============================================================================
 LICENSE                                         *hugo-license*
 

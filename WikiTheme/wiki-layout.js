@@ -10,11 +10,10 @@
   }
   // index.md split by `---` gives one tree per sub notebook; show only the
   // notebook holding the current page, else the one picked last time.
-  function setupNotebooks(nav) {
+  function setupNotebooks(nav, key) {
     var books = nav.querySelectorAll('.wiki-notebook');
     var tabs = nav.querySelectorAll('.wiki-notebook-tab');
     if (!books.length) { return; }
-    var key = 'wiki-notebook';
     function select(idx) {
       var name = '';
       for (var i = 0; i < books.length; i++) {
@@ -62,18 +61,27 @@
     });
     el.insertBefore(btn, el.firstChild);
   }
-  // load the shared site directory once (served from the wiki root);
-  // kept in a standalone file so adding a page needn't rebuild every page.
+  // each wiki directory with an index.md has its own sidebar; load the one of
+  // the nearest directory up from this page. It is kept in a standalone file
+  // so adding a page needn't rebuild every page.
+  function loadSidebar(dir) {
+    return fetch(dir + 'wiki_sidebar.html').then(function (r) {
+      if (r.ok) {
+        return r.text().then(function (html) { return { dir: dir, html: html }; });
+      }
+      if (dir === '/') { return null; }
+      return loadSidebar(dir.replace(/[^\/]*\/$/, ''));
+    });
+  }
   var nav = document.getElementById('wiki-sidebar');
   if (nav) {
-    fetch('/wiki_sidebar.html')
-      .then(function (r) { return r.ok ? r.text() : ''; })
-      .then(function (html) {
-        if (html) {
-          nav.innerHTML = html;
+    loadSidebar(location.pathname.replace(/[^\/]*$/, ''))
+      .then(function (res) {
+        if (res && res.html) {
+          nav.innerHTML = res.html;
           nav.hidden = false;
           markActive();
-          setupNotebooks(nav);
+          setupNotebooks(nav, 'wiki-notebook:' + res.dir);
           addToggle(nav, '全站目录');
         }
       })

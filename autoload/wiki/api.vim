@@ -31,7 +31,6 @@ let s:html_dir_path = s:get_path('html_dir')
 let s:markdown_dir_path = s:get_path('markdown_dir')
 let s:template_path = g:markdown_wiki_plug_dir .. '/templates/template.html'
 let s:script_path = s:join_path(g:markdown_wiki_plug_dir, 'bin', 'wiki2html.sh')
-let s:sidebar_file = s:html_dir_path .. '/wiki_sidebar.html'
 let s:http_server_opened = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -641,30 +640,45 @@ fun! s:html_escape(text)
   return substitute(text, '"', '\&quot;', 'g')
 endfun
 
+" url of a wiki directory relative to the server root, '' being the root
+fun! s:dir_url(rel)
+  return empty(a:rel) ? '/' : '/' .. a:rel .. '/'
+endfun
+
+fun! s:sidebar_path(rel)
+  return s:join_path(empty(a:rel) ? s:html_dir_path : s:html_path(a:rel), 'wiki_sidebar.html')
+endfun
+
+fun! s:index_title(rel, index_md)
+  for line in readfile(a:index_md, '', 3)
+    if line =~# '^%\s'
+      return matchstr(line, '^%\s*\zs.*')
+    endif
+  endfor
+  return empty(a:rel) ? 'Home' : fnamemodify(a:rel, ':t')
+endfun
+
+" render an index.md (part) as a sidebar tree, rewriting relative links to
+" root-absolute html paths so the fetched sidebar works on every page
+fun! s:render_tree(lines, rel)
+  let cmd = printf("pandoc -f markdown -t html | %s -r 's#\\.md\"#.html\"#g'", s:sed_command())
+  let html = system(cmd, a:lines)
+  let prefix = escape(s:dir_url(a:rel), '\&~')
+  let html = substitute(html, 'href="\zs\./', prefix, 'g')
+  return substitute(html, 'href="\zs\ze\.\./', prefix, 'g')
+endfun
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" generate the whole-site directory (left sidebar) from index.md, which is   "
-" the master nested table of contents linking to every page. Links are       "
-" rewritten to root-absolute html paths so wiki2html.sh's depth-based rewrite "
-" turns them into correct relative links on every page.                      "
+" generate the sidebar of a wiki directory from its index.md, the nested     "
+" table of contents of the pages below it.                                   "
 " If index.md is split into sub notebooks by horizontal rules, each notebook "
 " gets its own tree and a tab, and the page script shows one at a time.      "
+" A sub directory's sidebar starts with a link back to its parent index.     "
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-fun! s:generate_sidebar()
-  let index_md = s:markdown_path('index.md')
-  if !filereadable(index_md)
-    if filereadable(s:sidebar_file)
-      call delete(s:sidebar_file)
-    endif
-    return
-  endif
-  if !isdirectory(s:html_dir_path)
-    call mkdir(s:html_dir_path, 'p')
-  endif
-  let sed = s:sed_command()
-  let cmd = printf("pandoc -f markdown -t html | %s -r 's#href=\"\\./#href=\"/#g; s#\\.md\"#.html\"#g'", sed)
-  let notebooks = s:split_notebooks(index_md)
+fun! s:generate_sidebar(rel, index_md, parent_rel, parent_md)
+  let notebooks = s:split_notebooks(a:index_md)
   if len(notebooks) < 2
-    let fragment = system(cmd, readfile(index_md))
+    let fragment = s:render_tree(readfile(a:index_md), a:rel)
     if v:shell_error
       return
     endif
@@ -672,7 +686,7 @@ fun! s:generate_sidebar()
     let tabs = ['<div class="wiki-notebook-tabs" role="tablist">']
     let trees = []
     for i in range(len(notebooks))
-      let tree = system(cmd, notebooks[i].lines)
+      let tree = s:render_tree(notebooks[i].lines, a:rel)
       if v:shell_error
         return
       endif
@@ -685,15 +699,57 @@ fun! s:generate_sidebar()
     call add(tabs, '</div>')
     let fragment = join(tabs + trees, "\n")
   endif
-  let title = 'Home'
-  for line in readfile(index_md, '', 3)
-    if line =~# '^%\s'
-      let title = matchstr(line, '^%\s*\zs.*')
-      break
+  let head = []
+  if !empty(a:parent_md)
+    call add(head, printf('<a class="wiki-parent" href="%sindex.html">&lsaquo; %s</a>',
+          \ s:dir_url(a:parent_rel), s:html_escape(s:index_title(a:parent_rel, a:parent_md))))
+  endif
+  call add(head, printf('<a class="wiki-home" href="%sindex.html">%s</a>',
+        \ s:dir_url(a:rel), s:html_escape(s:index_title(a:rel, a:index_md))))
+  let sidebar = s:sidebar_path(a:rel)
+  if !isdirectory(fnamemodify(sidebar, ':h'))
+    call mkdir(fnamemodify(sidebar, ':h'), 'p')
+  endif
+  call writefile(split(join(head, "\n") .. "\n" .. fragment, "\n", 1), sidebar)
+endfun
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" every directory holding an index.md gets its own wiki_sidebar.html; a page "
+" loads the one of its nearest such directory. A sidebar is rebuilt when its "
+" index.md (or the parent's, which names the back link) changed, or always   "
+" when force is set. Sidebars whose index.md is gone are removed.            "
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+fun! s:generate_sidebars(force)
+  let dirs = {}
+  for index_md in split(globpath(s:markdown_dir_path, '**/index.md'), '\n')
+    let rel = fnamemodify(strpart(index_md, len(s:markdown_dir_path) + 1), ':h')
+    let dirs[rel ==# '.' ? '' : rel] = index_md
+  endfor
+  for sidebar in split(globpath(s:html_dir_path, '**/wiki_sidebar.html'), '\n')
+    let rel = fnamemodify(strpart(sidebar, len(s:html_dir_path) + 1), ':h')
+    if !has_key(dirs, rel ==# '.' ? '' : rel)
+      call delete(sidebar)
     endif
   endfor
-  let home = printf('<a class="wiki-home" href="/index.html">%s</a>', title)
-  call writefile(split(home .. "\n" .. fragment, "\n", 1), s:sidebar_file)
+  for [rel, index_md] in items(dirs)
+    let parent_rel = ''
+    let parent_md = ''
+    let up = rel
+    while !empty(up)
+      let up = fnamemodify(up, ':h')
+      let up = up ==# '.' ? '' : up
+      if has_key(dirs, up)
+        let parent_rel = up
+        let parent_md = dirs[up]
+        break
+      endif
+    endwhile
+    let sidebar = s:sidebar_path(rel)
+    let changed = max([getftime(index_md), empty(parent_md) ? -1 : getftime(parent_md)])
+    if a:force || changed >= getftime(sidebar)
+      call s:generate_sidebar(rel, index_md, parent_rel, parent_md)
+    endif
+  endfor
 endfun
 
 fun! s:md2html(stem)
@@ -763,14 +819,14 @@ fun! s:changed_sources()
 endfun
 
 fun! s:convert_changed()
-  call s:generate_sidebar()
+  call s:generate_sidebars(0)
   for stem in s:changed_sources()
     call s:md2html(stem)
   endfor
 endfun
 
 fun! s:convert_all()
-  call s:generate_sidebar()
+  call s:generate_sidebars(1)
   let md_files =  split(globpath(s:markdown_dir_path, '**/*.md'), '\n')
   for md in md_files
     let suffix = substitute(md, s:markdown_dir_path .. '/', '', '')
@@ -789,7 +845,7 @@ fun! s:convert_current()
     echoerr &ft .. ' cannot be converted to html'
     return
   endif
-  call s:generate_sidebar()
+  call s:generate_sidebars(0)
   let suffix = substitute(md, s:markdown_dir_path .. '/', '', '')
   let stem = substitute(suffix, '.md', '', '')
   let html = s:join_path(s:html_dir_path, stem..'.html')
