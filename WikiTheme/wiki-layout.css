@@ -44,7 +44,7 @@
 .wiki-main img { max-width: 100%; height: auto; }
 .wiki-main pre,
 .wiki-main div.sourceCode { max-width: 100%; overflow-x: auto; }
-.wiki-main table { display: block; max-width: 100%; overflow-x: auto; }
+.wiki-main table { display: block; width: fit-content; max-width: 100%; overflow-x: auto; }
 .wiki-main :not(pre) > code { white-space: normal; overflow-wrap: break-word; word-break: break-word; }
 mjx-container[display="true"] { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 /* site directory tree */
